@@ -170,10 +170,23 @@ enum DataManagerFactory {
             UsageRecord.self
         ])
 
+        // 명시적으로 로컬 저장소 경로 지정 (iCloud/보호된 폴더 접근 방지)
+        let username = NSUserName()
+        let appSupportPath = "/Users/\(username)/Library/Application Support/Claudacity"
+        let appSupportURL = URL(fileURLWithPath: appSupportPath)
+        let storeURL = appSupportURL.appendingPathComponent("claudacity.store")
+
+        // 디렉토리 생성
+        try FileManager.default.createDirectory(
+            at: appSupportURL,
+            withIntermediateDirectories: true
+        )
+
         let modelConfiguration = ModelConfiguration(
             schema: schema,
-            isStoredInMemoryOnly: false,
-            allowsSave: true
+            url: storeURL,
+            allowsSave: true,
+            cloudKitDatabase: .none  // CloudKit/iCloud 연동 비활성화
         )
 
         return try ModelContainer(
