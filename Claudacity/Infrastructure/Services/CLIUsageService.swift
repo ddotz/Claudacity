@@ -78,21 +78,16 @@ final class CLIUsageService: CLIUsageServiceProtocol, @unchecked Sendable {
     func fetchUsage() async throws -> CLIUsageResult {
         logDebug("Fetching usage via CLI /usage command", category: .cli)
 
-        // 1. Expect 스크립트 경로 확인
-        guard let scriptPath = getExpectScriptPath() else {
-            throw AppError.cliExecutionFailed("Expect script not found in bundle")
-        }
-
-        // 2. Claude CLI 경로 확인
+        // 1. Claude CLI 경로 확인
         guard let claudePath = await getClaudePath() else {
             throw AppError.cliNotInstalled
         }
 
-        // 3. Expect 스크립트 실행
-        let output = try await runExpectScript(scriptPath: scriptPath, claudePath: claudePath)
+        // 2. script 명령으로 Claude CLI 실행 (TTY 환경 제공)
+        let output = try await runClaudeUsageWithScript(claudePath: claudePath)
 
-        // 4. 출력 파싱
-        let result = parseExpectOutput(output)
+        // 3. 출력 파싱
+        let result = parseUsageOutput(output)
 
         logInfo("CLI usage fetched: session=\(result.sessionUsedPercent)%, weekly=\(result.weeklyUsedPercent)%", category: .cli)
 
@@ -101,53 +96,10 @@ final class CLIUsageService: CLIUsageServiceProtocol, @unchecked Sendable {
 
     /// Claude CLI 사용 가능 여부 확인
     func isAvailable() async -> Bool {
-        guard getExpectScriptPath() != nil else { return false }
         return await getClaudePath() != nil
     }
 
     // MARK: - Private Methods
-
-    /// 번들 내 Expect 스크립트 경로 반환
-    private func getExpectScriptPath() -> String? {
-        let scriptName = "claude-usage.exp"
-
-        // 1. Bundle.main.path 시도
-        if let bundlePath = Bundle.main.path(forResource: "claude-usage", ofType: "exp") {
-            logDebug("Script found via Bundle.main.path: \(bundlePath)", category: .cli)
-            return bundlePath
-        }
-
-        // 2. Bundle.main.resourceURL 시도
-        if let resourceURL = Bundle.main.resourceURL {
-            let scriptURL = resourceURL.appendingPathComponent(scriptName)
-            if fileManager.fileExists(atPath: scriptURL.path) {
-                logDebug("Script found via resourceURL: \(scriptURL.path)", category: .cli)
-                return scriptURL.path
-            }
-        }
-
-        // 3. Bundle.main.bundleURL 직접 접근
-        let bundleResourcePath = Bundle.main.bundleURL
-            .appendingPathComponent("Contents/Resources")
-            .appendingPathComponent(scriptName).path
-        if fileManager.fileExists(atPath: bundleResourcePath) {
-            logDebug("Script found via bundleURL: \(bundleResourcePath)", category: .cli)
-            return bundleResourcePath
-        }
-
-        // 4. 프로젝트 소스 폴더에서 찾기 (개발용)
-        let projectPath = "/Users/\(NSUserName())/Code/Claudacity/Claudacity/Resources/\(scriptName)"
-        if fileManager.fileExists(atPath: projectPath) {
-            logDebug("Script found in project: \(projectPath)", category: .cli)
-            return projectPath
-        }
-
-        // Note: DerivedData 전체 스캔은 불필요한 권한 요청(Apple Music, 네트워크 볼륨 등)을 
-        // 유발하므로 제거됨. 번들 빌드 시 스크립트는 Bundle.main에서 찾아야 함.
-
-        logWarning("Expect script not found anywhere", category: .cli)
-        return nil
-    }
 
     /// Claude CLI 경로 찾기
     private func getClaudePath() async -> String? {
@@ -192,63 +144,67 @@ final class CLIUsageService: CLIUsageServiceProtocol, @unchecked Sendable {
         return nil
     }
 
-    /// Expect 스크립트 실행
-    private func runExpectScript(scriptPath: String, claudePath: String) async throws -> String {
-        logDebug("Running expect script: \(scriptPath) with claude at: \(claudePath)", category: .cli)
+    /// expect 스크립트를 사용한 Claude CLI /usage 실행
+    private func runClaudeUsageWithScript(claudePath: String) async throws -> String {
+        logDebug("Running Claude CLI /usage via expect script", category: .cli)
+
+        // expect 스크립트 경로 찾기
+        guard let scriptPath = Bundle.main.path(forResource: "claude-usage", ofType: "exp") else {
+            logError("claude-usage.exp script not found in bundle", category: .cli)
+            throw AppError.cliExecutionFailed("Expect script not found")
+        }
+
+        logDebug("Using expect script at: \(scriptPath)", category: .cli)
 
         return try await withCheckedThrowingContinuation { continuation in
             let process = Process()
-            let stdoutPipe = Pipe()
-            let stderrPipe = Pipe()
+            let pipe = Pipe()
 
+            // expect 스크립트 실행
             process.executableURL = URL(fileURLWithPath: "/usr/bin/expect")
-            process.arguments = ["-f", scriptPath, claudePath]
-            process.standardOutput = stdoutPipe
-            process.standardError = stderrPipe
+            process.arguments = [scriptPath, claudePath]
+            process.standardOutput = pipe
+            process.standardError = pipe
 
-            // 환경 변수 설정 - 전체 환경 변수 상속 대신 필요한 것만 명시적으로 설정
-            // Note: NSHomeDirectory()는 보호된 폴더 접근 권한 요청을 유발하므로 사용하지 않음
-            let env: [String: String] = [
-                "PATH": "/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin",
-                "TERM": "xterm-256color",
-                "HOME": "/Users/\(NSUserName())",
-                "LANG": "en_US.UTF-8"
-            ]
+            // 환경 변수
+            var env = ProcessInfo.processInfo.environment
+            env["CLAUDE_USAGE_CLI_PATH"] = claudePath
             process.environment = env
 
-            // 타임아웃 처리
+            // 타임아웃 (30초)
             let timeoutWork = DispatchWorkItem { [weak process] in
                 if let p = process, p.isRunning {
-                    logWarning("Expect script timed out, terminating", category: .cli)
+                    logWarning("Expect script timed out after 30s", category: .cli)
                     p.terminate()
                 }
             }
-            DispatchQueue.global().asyncAfter(deadline: .now() + timeout, execute: timeoutWork)
+            DispatchQueue.global().asyncAfter(deadline: .now() + 30, execute: timeoutWork)
 
             do {
                 try process.run()
                 process.waitUntilExit()
                 timeoutWork.cancel()
 
-                let stdoutData = stdoutPipe.fileHandleForReading.readDataToEndOfFile()
-                let stderrData = stderrPipe.fileHandleForReading.readDataToEndOfFile()
+                let data = pipe.fileHandleForReading.readDataToEndOfFile()
+                let output = String(data: data, encoding: .utf8) ?? ""
 
-                let stdout = String(data: stdoutData, encoding: .utf8) ?? ""
-                let stderr = String(data: stderrData, encoding: .utf8) ?? ""
+                logDebug("Expect script output length: \(output.count) bytes", category: .cli)
+                logDebug("Output preview: \(String(output.prefix(300)))", category: .cli)
 
-                if process.terminationStatus != 0 && process.terminationStatus != 127 {
-                    // 에러지만 출력이 있으면 파싱 시도
-                    if stdout.contains("SESSION_USED") {
-                        continuation.resume(returning: stdout)
-                        return
-                    }
+                // Debug: Print full output to console for debugging
+                print("=== EXPECT SCRIPT OUTPUT ===")
+                print(output)
+                print("=== END OUTPUT ===")
 
-                    logWarning("Expect script failed: exit=\(process.terminationStatus), stderr=\(stderr)", category: .cli)
-                    continuation.resume(throwing: AppError.cliExecutionFailed(stderr.isEmpty ? "Exit code \(process.terminationStatus)" : stderr))
-                    return
+                if output.isEmpty {
+                    logWarning("Expect script returned empty output", category: .cli)
+                    print("⚠️ WARNING: Expect script returned empty output!")
+                } else if output.contains("ERROR:") {
+                    logError("Expect script returned error: \(output)", category: .cli)
+                    print("❌ ERROR: Expect script returned error: \(output)")
                 }
 
-                continuation.resume(returning: stdout)
+                continuation.resume(returning: output)
             } catch {
                 timeoutWork.cancel()
                 logError("Failed to run expect script", category: .cli, error: error)
@@ -281,45 +237,79 @@ final class CLIUsageService: CLIUsageServiceProtocol, @unchecked Sendable {
         }
     }
 
-    /// Expect 스크립트 출력 파싱
-    private func parseExpectOutput(_ output: String) -> CLIUsageResult {
+    /// expect 스크립트 출력 파싱
+    /// 예상 형식:
+    /// SESSION_USED:8
+    /// SESSION_RESET:4:59pm (KST)
+    /// WEEKLY_USED:52
+    /// WEEKLY_RESET:Dec 16, 10:59am (KST)
+    private func parseUsageOutput(_ output: String) -> CLIUsageResult {
+        logDebug("Starting to parse expect script output", category: .cli)
+        print("=== PARSING START ===")
+        print("Output to parse (\(output.count) bytes):")
+        print(output)
+
         var sessionUsed: Int = 0
         var sessionReset: String?
         var weeklyUsed: Int = 0
         var weeklyReset: String?
 
+        // 라인별로 파싱
         let lines = output.components(separatedBy: .newlines)
+        print("Total lines: \(lines.count)")
 
         for line in lines {
-            let parts = line.split(separator: ":", maxSplits: 1).map { String($0) }
-            guard parts.count == 2 else { continue }
+            let trimmed = line.trimmingCharacters(in: .whitespaces)
 
-            let key = parts[0].trimmingCharacters(in: .whitespaces)
-            let value = parts[1].trimmingCharacters(in: .whitespaces)
-
-            switch key {
-            case "SESSION_USED":
-                sessionUsed = Int(value) ?? 0
-            case "SESSION_RESET":
-                sessionReset = value
-            case "WEEKLY_USED":
-                weeklyUsed = Int(value) ?? 0
-            case "WEEKLY_RESET":
-                weeklyReset = value
-            default:
-                break
+            if trimmed.hasPrefix("SESSION_USED:") {
+                if let value = Int(trimmed.replacingOccurrences(of: "SESSION_USED:", with: "")) {
+                    sessionUsed = value
+                    logDebug("Parsed SESSION_USED: \(sessionUsed)%", category: .cli)
+                    print("✓ Parsed SESSION_USED: \(sessionUsed)")
+                }
+            } else if trimmed.hasPrefix("SESSION_RESET:") {
+                sessionReset = trimmed.replacingOccurrences(of: "SESSION_RESET:", with: "")
+                logDebug("Parsed SESSION_RESET: \(sessionReset ?? "nil")", category: .cli)
+                print("✓ Parsed SESSION_RESET: \(sessionReset ?? "nil")")
+            } else if trimmed.hasPrefix("WEEKLY_USED:") {
+                if let value = Int(trimmed.replacingOccurrences(of: "WEEKLY_USED:", with: "")) {
+                    weeklyUsed = value
+                    logDebug("Parsed WEEKLY_USED: \(weeklyUsed)%", category: .cli)
+                    print("✓ Parsed WEEKLY_USED: \(weeklyUsed)")
+                }
+            } else if trimmed.hasPrefix("WEEKLY_RESET:") {
+                weeklyReset = trimmed.replacingOccurrences(of: "WEEKLY_RESET:", with: "")
+                logDebug("Parsed WEEKLY_RESET: \(weeklyReset ?? "nil")", category: .cli)
+                print("✓ Parsed WEEKLY_RESET: \(weeklyReset ?? "nil")")
+            } else if trimmed.hasPrefix("ERROR:") {
+                logError("Expect script error: \(trimmed)", category: .cli)
+                print("❌ ERROR: \(trimmed)")
             }
         }
 
-        logDebug("Parsed: session=\(sessionUsed)%, reset=\(sessionReset ?? "nil"), weekly=\(weeklyUsed)%, reset=\(weeklyReset ?? "nil")", category: .cli)
+        // 파싱 실패 경고
+        if sessionUsed == 0 && weeklyUsed == 0 {
+            logWarning("Failed to parse usage data from expect script output", category: .cli)
+            logDebug("Full output:\n\(output)", category: .cli)
+            print("❌ PARSING FAILED: No usage data found")
+        }
 
-        return CLIUsageResult(
+        let result = CLIUsageResult(
             sessionUsedPercent: sessionUsed,
             sessionResetTime: sessionReset,
             weeklyUsedPercent: weeklyUsed,
             weeklyResetTime: weeklyReset,
             fetchedAt: Date()
         )
+
+        print("=== PARSING RESULT ===")
+        print("Session Used: \(result.sessionUsedPercent)%")
+        print("Session Remaining: \(result.sessionRemainingPercent)%")
+        print("Weekly Used: \(result.weeklyUsedPercent)%")
+        print("Weekly Remaining: \(result.weeklyRemainingPercent)%")
+        print("=== END PARSING ===")
+
+        return result
     }
 }
 
