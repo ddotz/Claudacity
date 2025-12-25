@@ -42,25 +42,20 @@ Download the latest `.app` from [Releases](https://github.com/ddotz/Claudacity/r
 
 **Requirements:**
 - macOS 14.0+ (Sonoma)
-- Xcode 15+
+- Xcode 15+ (Command Line Tools required)
 
-**Quick Build:**
 ```bash
 git clone https://github.com/ddotz/Claudacity.git
 cd Claudacity
-./scripts/build.sh
+xcodebuild -scheme Claudacity -configuration Release -derivedDataPath build
+cp -R build/Build/Products/Release/Claudacity.app /Applications/
 ```
 
-The app will be built at `build/Claudacity.app`. Move it to `/Applications`:
-```bash
-cp -R build/Claudacity.app /Applications/
-```
-
-**Build with Xcode:**
+**Or build with Xcode GUI:**
 ```bash
 open Claudacity.xcodeproj
 ```
-Build and run with `⌘ + R` in Xcode
+Build and run with `⌘ + R`
 
 ## 🚀 Usage / 사용법
 
