@@ -1,0 +1,90 @@
+/* 
+  Localizable.strings (English)
+  Claudacity
+*/
+
+// MARK: - App
+"app.name" = "Claudacity";
+
+// MARK: - Tabs
+"tab.usage" = "Usage";
+"tab.stats" = "Statistics";
+
+// MARK: - Settings
+"settings.appearance" = "Appearance";
+"settings.notifications" = "Notifications";
+"settings.general" = "General";
+"settings.theme" = "Theme";
+"settings.icon_style" = "Icon Style";
+"settings.icon" = "Icon";
+"settings.preview" = "Preview";
+"settings.display_options" = "Display Options";
+"settings.show_percentage" = "Show Percentage";
+"settings.show_reset_time" = "Show Reset Time";
+"settings.time_format" = "Time Format";
+"settings.show_progress_bar" = "Show Progress Bar";
+"settings.display_mode" = "Display Mode";
+"settings.low_notification" = "Low Usage Alert";
+"settings.critical_notification" = "Critical Alert";
+"settings.threshold" = "Threshold";
+"settings.startup" = "Startup";
+"settings.launch_at_login" = "Launch at Login";
+"settings.launch_help" = "Claudacity starts automatically when you log in";
+"settings.refresh" = "Refresh";
+"settings.refresh_interval" = "Refresh Interval";
+"settings.about" = "About";
+"settings.version" = "Version";
+
+// MARK: - Theme
+"theme.system" = "System";
+"theme.light" = "Light";
+"theme.dark" = "Dark";
+
+// MARK: - Icon Style
+"icon.claudacity" = "Claudacity";
+"icon.gauge" = "Gauge";
+"icon.circle" = "Circle";
+"icon.energy" = "Energy";
+"icon.minimal" = "Minimal";
+"icon.classic" = "Classic";
+"icon.brain" = "Brain";
+"icon.sparkle" = "Sparkle";
+"icon.chart" = "Chart";
+
+// MARK: - Display Mode
+"display.session" = "Session";
+"display.weekly" = "Weekly";
+"display.all" = "All";
+
+// MARK: - Reset Time Format
+"time_format.absolute" = "Absolute Time";
+"time_format.remaining" = "Remaining Time";
+
+// MARK: - Chart
+"chart.no_data" = "No Data";
+"chart.token_usage" = "Token Usage";
+
+// MARK: - Usage
+"usage.loading" = "Loading usage...";
+"usage.loading_desc" = "Fetching usage data from Claude CLI";
+"usage.cli_status" = "CLI Status:";
+"usage.cli_installed" = "Claude CLI Installed:";
+"usage.cli_available" = "CLI /usage Available:";
+"usage.session_used" = "Session Used";
+"usage.weekly_used" = "Weekly Used";
+
+// MARK: - Common
+"common.yes" = "Yes";
+"common.no" = "No";
+"common.refresh" = "Refresh";
+"common.reset" = "Reset:";
+
+// MARK: - Time Intervals
+"time.5min" = "5 min";
+"time.10min" = "10 min";
+"time.15min" = "15 min";
+"time.30min" = "30 min";
+
+// MARK: - Period
+"period.24h" = "24 Hours";
+"period.7d" = "7 Days";

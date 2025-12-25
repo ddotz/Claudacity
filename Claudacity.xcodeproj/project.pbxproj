@@ -1,0 +1,688 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		A1000001001 /* ClaudacityApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000001000 /* ClaudacityApp.swift */; };
+		A1000002001 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000002000 /* AppDelegate.swift */; };
+		A1000003001 /* Dependencies.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000003000 /* Dependencies.swift */; };
+		A1000004001 /* UsageData.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000004000 /* UsageData.swift */; };
+		A1000005001 /* AppSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000005000 /* AppSettings.swift */; };
+		A1000006001 /* AppError.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000006000 /* AppError.swift */; };
+		A1000007001 /* UsageRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000007000 /* UsageRepository.swift */; };
+		A1000008001 /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000008000 /* APIClient.swift */; };
+		A1000009001 /* MenuBarController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000009000 /* MenuBarController.swift */; };
+		A1000010001 /* PopoverView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000010000 /* PopoverView.swift */; };
+		A1000011001 /* UsageViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000011000 /* UsageViewModel.swift */; };
+		A1000012001 /* ProgressBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000012000 /* ProgressBarView.swift */; };
+		A1000013001 /* UsageCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000013000 /* UsageCardView.swift */; };
+		A1000014001 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A1000014000 /* Assets.xcassets */; };
+		A1000015001 /* SettingsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000015000 /* SettingsStore.swift */; };
+		A1000016001 /* NotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000016000 /* NotificationService.swift */; };
+		A1000017001 /* UsageRepositoryImpl.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000017000 /* UsageRepositoryImpl.swift */; };
+		A1000018001 /* Colors.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000018000 /* Colors.swift */; };
+		A1000019001 /* Dimensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000019000 /* Dimensions.swift */; };
+		A1000020001 /* UsageTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000020000 /* UsageTabView.swift */; };
+		A1000021001 /* MockDataSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000021000 /* MockDataSource.swift */; };
+		A1000024001 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000024000 /* SettingsView.swift */; };
+		A1000025001 /* Logger.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000025000 /* Logger.swift */; };
+		A1000027001 /* StatsTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000027000 /* StatsTabView.swift */; };
+		A1000028001 /* Session.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000028000 /* Session.swift */; };
+		A1000029001 /* UsageRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000029000 /* UsageRecord.swift */; };
+		A1000030001 /* DataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000030000 /* DataManager.swift */; };
+		A1000031001 /* IconGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000031000 /* IconGenerator.swift */; };
+		A1000032001 /* SessionDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000032000 /* SessionDetector.swift */; };
+		A1000033001 /* MiniChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000033000 /* MiniChartView.swift */; };
+		A1000034001 /* LaunchAtLoginManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000034000 /* LaunchAtLoginManager.swift */; };
+		A1000035001 /* CLIRunner.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000035000 /* CLIRunner.swift */; };
+		A1000036001 /* CLIUsageService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000036000 /* CLIUsageService.swift */; };
+		A1000037001 /* claude-usage.exp in Resources */ = {isa = PBXBuildFile; fileRef = A1000037000 /* claude-usage.exp */; };
+		A1000038001 /* (null) in Resources */ = {isa = PBXBuildFile; };
+		F34402792EFCDF360059DBEA /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = F34402732EFCDF360059DBEA /* Localizable.strings */; };
+		F344027A2EFCDF360059DBEA /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = F34402762EFCDF360059DBEA /* Localizable.strings */; };
+		F3E0575E2EFA54880053013A /* ClaudeLogEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3E0575D2EFA54880053013A /* ClaudeLogEntry.swift */; };
+		F3E057602EFA54940053013A /* ClaudeLogReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3E0575F2EFA54940053013A /* ClaudeLogReader.swift */; };
+		F3E057632EFA549F0053013A /* UsageAggregatorImpl.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3E057622EFA549F0053013A /* UsageAggregatorImpl.swift */; };
+		F3E057642EFA549F0053013A /* ClaudeLogReaderImpl.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3E057612EFA549F0053013A /* ClaudeLogReaderImpl.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		A1000000000 /* Claudacity.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Claudacity.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A1000001000 /* ClaudacityApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClaudacityApp.swift; sourceTree = "<group>"; };
+		A1000002000 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		A1000003000 /* Dependencies.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Dependencies.swift; sourceTree = "<group>"; };
+		A1000004000 /* UsageData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageData.swift; sourceTree = "<group>"; };
+		A1000005000 /* AppSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettings.swift; sourceTree = "<group>"; };
+		A1000006000 /* AppError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppError.swift; sourceTree = "<group>"; };
+		A1000007000 /* UsageRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageRepository.swift; sourceTree = "<group>"; };
+		A1000008000 /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
+		A1000009000 /* MenuBarController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarController.swift; sourceTree = "<group>"; };
+		A1000010000 /* PopoverView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PopoverView.swift; sourceTree = "<group>"; };
+		A1000011000 /* UsageViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageViewModel.swift; sourceTree = "<group>"; };
+		A1000012000 /* ProgressBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressBarView.swift; sourceTree = "<group>"; };
+		A1000013000 /* UsageCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageCardView.swift; sourceTree = "<group>"; };
+		A1000014000 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		A1000015000 /* SettingsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsStore.swift; sourceTree = "<group>"; };
+		A1000016000 /* NotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationService.swift; sourceTree = "<group>"; };
+		A1000017000 /* UsageRepositoryImpl.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageRepositoryImpl.swift; sourceTree = "<group>"; };
+		A1000018000 /* Colors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Colors.swift; sourceTree = "<group>"; };
+		A1000019000 /* Dimensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Dimensions.swift; sourceTree = "<group>"; };
+		A1000020000 /* UsageTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageTabView.swift; sourceTree = "<group>"; };
+		A1000021000 /* MockDataSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockDataSource.swift; sourceTree = "<group>"; };
+		A1000022000 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		A1000023000 /* Claudacity.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Claudacity.entitlements; sourceTree = "<group>"; };
+		A1000024000 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		A1000025000 /* Logger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Logger.swift; sourceTree = "<group>"; };
+		A1000027000 /* StatsTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatsTabView.swift; sourceTree = "<group>"; };
+		A1000028000 /* Session.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Session.swift; sourceTree = "<group>"; };
+		A1000029000 /* UsageRecord.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageRecord.swift; sourceTree = "<group>"; };
+		A1000030000 /* DataManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataManager.swift; sourceTree = "<group>"; };
+		A1000031000 /* IconGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IconGenerator.swift; sourceTree = "<group>"; };
+		A1000032000 /* SessionDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionDetector.swift; sourceTree = "<group>"; };
+		A1000033000 /* MiniChartView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MiniChartView.swift; sourceTree = "<group>"; };
+		A1000034000 /* LaunchAtLoginManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaunchAtLoginManager.swift; sourceTree = "<group>"; };
+		A1000035000 /* CLIRunner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CLIRunner.swift; sourceTree = "<group>"; };
+		A1000036000 /* CLIUsageService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CLIUsageService.swift; sourceTree = "<group>"; };
+		A1000037000 /* claude-usage.exp */ = {isa = PBXFileReference; lastKnownFileType = text; path = "claude-usage.exp"; sourceTree = "<group>"; };
+		F34402722EFCDF360059DBEA /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = Localizable.strings; sourceTree = "<group>"; };
+		F34402752EFCDF360059DBEA /* ko */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ko; path = Localizable.strings; sourceTree = "<group>"; };
+		F3E0575D2EFA54880053013A /* ClaudeLogEntry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClaudeLogEntry.swift; sourceTree = "<group>"; };
+		F3E0575F2EFA54940053013A /* ClaudeLogReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClaudeLogReader.swift; sourceTree = "<group>"; };
+		F3E057612EFA549F0053013A /* ClaudeLogReaderImpl.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClaudeLogReaderImpl.swift; sourceTree = "<group>"; };
+		F3E057622EFA549F0053013A /* UsageAggregatorImpl.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageAggregatorImpl.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		A0900000000 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		A0000000000 = {
+			isa = PBXGroup;
+			children = (
+				A0100000000 /* Claudacity */,
+				A0200000000 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		A0100000000 /* Claudacity */ = {
+			isa = PBXGroup;
+			children = (
+				A0110000000 /* App */,
+				A0120000000 /* Domain */,
+				A0130000000 /* Infrastructure */,
+				A0140000000 /* Presentation */,
+				A0150000000 /* Resources */,
+				A1000022000 /* Info.plist */,
+				A1000023000 /* Claudacity.entitlements */,
+			);
+			path = Claudacity;
+			sourceTree = "<group>";
+		};
+		A0110000000 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				A1000001000 /* ClaudacityApp.swift */,
+				A1000002000 /* AppDelegate.swift */,
+				A1000003000 /* Dependencies.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		A0120000000 /* Domain */ = {
+			isa = PBXGroup;
+			children = (
+				A0121000000 /* Models */,
+				A0122000000 /* Protocols */,
+			);
+			path = Domain;
+			sourceTree = "<group>";
+		};
+		A0121000000 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				F3E0575D2EFA54880053013A /* ClaudeLogEntry.swift */,
+				A1000004000 /* UsageData.swift */,
+				A1000005000 /* AppSettings.swift */,
+				A1000006000 /* AppError.swift */,
+				A1000028000 /* Session.swift */,
+				A1000029000 /* UsageRecord.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		A0122000000 /* Protocols */ = {
+			isa = PBXGroup;
+			children = (
+				F3E0575F2EFA54940053013A /* ClaudeLogReader.swift */,
+				A1000007000 /* UsageRepository.swift */,
+			);
+			path = Protocols;
+			sourceTree = "<group>";
+		};
+		A0130000000 /* Infrastructure */ = {
+			isa = PBXGroup;
+			children = (
+				A0131000000 /* Network */,
+				A0132000000 /* Storage */,
+				A0133000000 /* Services */,
+				A0134000000 /* Repositories */,
+			);
+			path = Infrastructure;
+			sourceTree = "<group>";
+		};
+		A0131000000 /* Network */ = {
+			isa = PBXGroup;
+			children = (
+				A1000008000 /* APIClient.swift */,
+				A1000021000 /* MockDataSource.swift */,
+			);
+			path = Network;
+			sourceTree = "<group>";
+		};
+		A0132000000 /* Storage */ = {
+			isa = PBXGroup;
+			children = (
+				A1000015000 /* SettingsStore.swift */,
+			);
+			path = Storage;
+			sourceTree = "<group>";
+		};
+		A0133000000 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				F3E057612EFA549F0053013A /* ClaudeLogReaderImpl.swift */,
+				F3E057622EFA549F0053013A /* UsageAggregatorImpl.swift */,
+				A1000016000 /* NotificationService.swift */,
+				A1000025000 /* Logger.swift */,
+				A1000030000 /* DataManager.swift */,
+				A1000031000 /* IconGenerator.swift */,
+				A1000032000 /* SessionDetector.swift */,
+				A1000034000 /* LaunchAtLoginManager.swift */,
+				A1000035000 /* CLIRunner.swift */,
+				A1000036000 /* CLIUsageService.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		A0134000000 /* Repositories */ = {
+			isa = PBXGroup;
+			children = (
+				A1000017000 /* UsageRepositoryImpl.swift */,
+			);
+			path = Repositories;
+			sourceTree = "<group>";
+		};
+		A0140000000 /* Presentation */ = {
+			isa = PBXGroup;
+			children = (
+				A0141000000 /* MenuBar */,
+				A0142000000 /* Popover */,
+				A0145000000 /* Settings */,
+				A0143000000 /* Components */,
+				A0144000000 /* ViewModels */,
+			);
+			path = Presentation;
+			sourceTree = "<group>";
+		};
+		A0141000000 /* MenuBar */ = {
+			isa = PBXGroup;
+			children = (
+				A1000009000 /* MenuBarController.swift */,
+			);
+			path = MenuBar;
+			sourceTree = "<group>";
+		};
+		A0142000000 /* Popover */ = {
+			isa = PBXGroup;
+			children = (
+				A1000010000 /* PopoverView.swift */,
+				A1000020000 /* UsageTabView.swift */,
+				A1000027000 /* StatsTabView.swift */,
+			);
+			path = Popover;
+			sourceTree = "<group>";
+		};
+		A0143000000 /* Components */ = {
+			isa = PBXGroup;
+			children = (
+				A1000012000 /* ProgressBarView.swift */,
+				A1000013000 /* UsageCardView.swift */,
+				A1000018000 /* Colors.swift */,
+				A1000019000 /* Dimensions.swift */,
+				A1000033000 /* MiniChartView.swift */,
+			);
+			path = Components;
+			sourceTree = "<group>";
+		};
+		A0144000000 /* ViewModels */ = {
+			isa = PBXGroup;
+			children = (
+				A1000011000 /* UsageViewModel.swift */,
+			);
+			path = ViewModels;
+			sourceTree = "<group>";
+		};
+		A0145000000 /* Settings */ = {
+			isa = PBXGroup;
+			children = (
+				A1000024000 /* SettingsView.swift */,
+			);
+			path = Settings;
+			sourceTree = "<group>";
+		};
+		A0150000000 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				F34402742EFCDF360059DBEA /* en.lproj */,
+				F34402772EFCDF360059DBEA /* ko.lproj */,
+				F34402782EFCDF360059DBEA /* Sounds */,
+				A1000014000 /* Assets.xcassets */,
+				A1000037000 /* claude-usage.exp */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		A0200000000 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				A1000000000 /* Claudacity.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		F34402742EFCDF360059DBEA /* en.lproj */ = {
+			isa = PBXGroup;
+			children = (
+				F34402732EFCDF360059DBEA /* Localizable.strings */,
+			);
+			path = en.lproj;
+			sourceTree = "<group>";
+		};
+		F34402772EFCDF360059DBEA /* ko.lproj */ = {
+			isa = PBXGroup;
+			children = (
+				F34402762EFCDF360059DBEA /* Localizable.strings */,
+			);
+			path = ko.lproj;
+			sourceTree = "<group>";
+		};
+		F34402782EFCDF360059DBEA /* Sounds */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Sounds;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		A0800000000 /* Claudacity */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A0700000000 /* Build configuration list for PBXNativeTarget "Claudacity" */;
+			buildPhases = (
+				A0800000001 /* Sources */,
+				A0900000000 /* Frameworks */,
+				A0800000002 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Claudacity;
+			productName = Claudacity;
+			productReference = A1000000000 /* Claudacity.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		A0300000000 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1500;
+				LastUpgradeCheck = 2620;
+				TargetAttributes = {
+					A0800000000 = {
+						CreatedOnToolsVersion = 15.0;
+					};
+				};
+			};
+			buildConfigurationList = A0600000000 /* Build configuration list for PBXProject "Claudacity" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = ko;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				ko,
+				en,
+				Base,
+			);
+			mainGroup = A0000000000;
+			productRefGroup = A0200000000 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				A0800000000 /* Claudacity */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		A0800000002 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A1000014001 /* Assets.xcassets in Resources */,
+				A1000037001 /* claude-usage.exp in Resources */,
+				F34402792EFCDF360059DBEA /* Localizable.strings in Resources */,
+				F344027A2EFCDF360059DBEA /* Localizable.strings in Resources */,
+				A1000038001 /* (null) in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		A0800000001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A1000001001 /* ClaudacityApp.swift in Sources */,
+				A1000002001 /* AppDelegate.swift in Sources */,
+				A1000003001 /* Dependencies.swift in Sources */,
+				A1000004001 /* UsageData.swift in Sources */,
+				A1000005001 /* AppSettings.swift in Sources */,
+				A1000006001 /* AppError.swift in Sources */,
+				A1000007001 /* UsageRepository.swift in Sources */,
+				A1000008001 /* APIClient.swift in Sources */,
+				A1000009001 /* MenuBarController.swift in Sources */,
+				F3E057602EFA54940053013A /* ClaudeLogReader.swift in Sources */,
+				A1000010001 /* PopoverView.swift in Sources */,
+				F3E057632EFA549F0053013A /* UsageAggregatorImpl.swift in Sources */,
+				F3E057642EFA549F0053013A /* ClaudeLogReaderImpl.swift in Sources */,
+				A1000011001 /* UsageViewModel.swift in Sources */,
+				F3E0575E2EFA54880053013A /* ClaudeLogEntry.swift in Sources */,
+				A1000012001 /* ProgressBarView.swift in Sources */,
+				A1000013001 /* UsageCardView.swift in Sources */,
+				A1000015001 /* SettingsStore.swift in Sources */,
+				A1000016001 /* NotificationService.swift in Sources */,
+				A1000017001 /* UsageRepositoryImpl.swift in Sources */,
+				A1000018001 /* Colors.swift in Sources */,
+				A1000019001 /* Dimensions.swift in Sources */,
+				A1000020001 /* UsageTabView.swift in Sources */,
+				A1000021001 /* MockDataSource.swift in Sources */,
+				A1000024001 /* SettingsView.swift in Sources */,
+				A1000025001 /* Logger.swift in Sources */,
+				A1000027001 /* StatsTabView.swift in Sources */,
+				A1000028001 /* Session.swift in Sources */,
+				A1000029001 /* UsageRecord.swift in Sources */,
+				A1000030001 /* DataManager.swift in Sources */,
+				A1000031001 /* IconGenerator.swift in Sources */,
+				A1000032001 /* SessionDetector.swift in Sources */,
+				A1000033001 /* MiniChartView.swift in Sources */,
+				A1000034001 /* LaunchAtLoginManager.swift in Sources */,
+				A1000035001 /* CLIRunner.swift in Sources */,
+				A1000036001 /* CLIUsageService.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXVariantGroup section */
+		F34402732EFCDF360059DBEA /* Localizable.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				F34402722EFCDF360059DBEA /* en */,
+			);
+			name = Localizable.strings;
+			sourceTree = "<group>";
+		};
+		F34402762EFCDF360059DBEA /* Localizable.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				F34402752EFCDF360059DBEA /* ko */,
+			);
+			name = Localizable.strings;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
+
+/* Begin XCBuildConfiguration section */
+		A0400000000 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		A0400000001 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = macosx;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
+			};
+			name = Release;
+		};
+		A0500000000 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Claudacity/Claudacity.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_APP_SANDBOX = NO;
+				ENABLE_HARDENED_RUNTIME = NO;
+				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
+				ENABLE_USER_SELECTED_FILES = readonly;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Claudacity/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Claudacity;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
+				INFOPLIST_KEY_LSUIElement = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.claudacity.app;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		A0500000001 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Claudacity/Claudacity.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_APP_SANDBOX = NO;
+				ENABLE_HARDENED_RUNTIME = NO;
+				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
+				ENABLE_USER_SELECTED_FILES = readonly;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Claudacity/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Claudacity;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
+				INFOPLIST_KEY_LSUIElement = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.claudacity.app;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin PBXVariantGroup section */
+		A1000038000 /* Localizable.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				A1000038002 /* en */,
+				A1000038003 /* ko */,
+			);
+			name = Localizable.strings;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
+
+/* Begin XCConfigurationList section */
+		A0600000000 /* Build configuration list for PBXProject "Claudacity" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A0400000000 /* Debug */,
+				A0400000001 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A0700000000 /* Build configuration list for PBXNativeTarget "Claudacity" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A0500000000 /* Debug */,
+				A0500000001 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = A0300000000 /* Project object */;
+}

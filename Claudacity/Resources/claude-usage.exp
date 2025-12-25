@@ -1,0 +1,371 @@
+#!/usr/bin/expect -f
+# ============================================================================
+# claude-usage.exp - Claude CLI 사용량 조회 스크립트
+# ============================================================================
+#
+# 사용법:
+#   claude-usage.exp [cli_path] [-d|--debug] [-j|--json]
+#
+# 환경변수:
+#   CLAUDE_USAGE_CLI_PATH - CLI 경로 (인자보다 우선순위 낮음)
+#   CLAUDE_USAGE_DEBUG    - "1" 설정 시 디버그 모드 활성화
+#   CLAUDE_USAGE_JSON     - "1" 설정 시 JSON 출력
+#
+# ============================================================================
+
+# ============================================================================
+# 상수 정의
+# ============================================================================
+# CLI 초기화 대기 시간 (초) - Claude CLI TUI 렌더링 시간 고려
+set INIT_WAIT_SEC 2
+
+# 전체 타임아웃 (초) - 네트워크 지연 및 TUI 로딩 고려
+set TIMEOUT_SEC 25
+
+# 우아한 종료 대기 시간 (초) - SIGTERM 후 프로세스 정리 대기
+set GRACEFUL_EXIT_WAIT_SEC 1
+
+# 섹션 로딩 추가 대기 시간 (초) - Sonnet 없는 플랜용 폴백
+set SECTION_LOAD_WAIT_SEC 1
+
+# ============================================================================
+# 설정 초기화
+# ============================================================================
+set timeout $TIMEOUT_SEC
+log_user 0
+
+set debug_mode 0
+set json_output 0
+set claude_cli "claude"
+
+# ============================================================================
+# 인자 파싱 - CLI 경로 및 옵션 플래그 처리
+# ============================================================================
+foreach arg $argv {
+    switch -glob -- $arg {
+        "-d" - "--debug" {
+            set debug_mode 1
+        }
+        "-j" - "--json" {
+            set json_output 1
+        }
+        default {
+            # 플래그가 아닌 첫 번째 인자를 CLI 경로로 사용
+            if {[string index $arg 0] ne "-"} {
+                set claude_cli $arg
+            }
+        }
+    }
+}
+
+# 환경변수 폴백
+if {$claude_cli eq "claude" && [info exists env(CLAUDE_USAGE_CLI_PATH)] && $env(CLAUDE_USAGE_CLI_PATH) ne ""} {
+    set claude_cli $env(CLAUDE_USAGE_CLI_PATH)
+}
+if {[info exists env(CLAUDE_USAGE_DEBUG)] && $env(CLAUDE_USAGE_DEBUG) eq "1"} {
+    set debug_mode 1
+}
+if {[info exists env(CLAUDE_USAGE_JSON)] && $env(CLAUDE_USAGE_JSON) eq "1"} {
+    set json_output 1
+}
+
+# ============================================================================
+# 유틸리티 함수
+# ============================================================================
+
+# ANSI 이스케이프 시퀀스 제거 - 중복 로직 통합
+proc strip_ansi {text} {
+    # CSI 시퀀스: ESC [ <params> <command>
+    regsub -all {\x1b\[[0-9;:?]*[@-~]} $text "" text
+    # OSC 시퀀스: ESC ] ... BEL
+    regsub -all {\x1b\][^\x07]*\x07} $text "" text
+    # 문자 세트 선택: ESC ( 또는 ESC )
+    regsub -all {\x1b[()][AB012]} $text "" text
+    # 기타 제어 문자 제거 (개행 제외)
+    regsub -all {[\x00-\x09\x0b-\x1f]} $text "" text
+    return $text
+}
+
+# 디버그 로그 출력
+proc debug_log {message} {
+    global debug_mode
+    if {$debug_mode} {
+        puts stderr "\[DEBUG\] $message"
+    }
+}
+
+# 결과 출력 - KEY:VALUE 또는 JSON 형식
+proc output_results {session_pct session_reset weekly_pct weekly_reset error_msg} {
+    global json_output
+    
+    if {$json_output} {
+        # JSON 출력
+        set json "{"
+        set first 1
+        
+        if {$session_pct ne ""} {
+            if {!$first} { append json "," }
+            append json "\"session_used\":$session_pct"
+            set first 0
+        }
+        if {$session_reset ne ""} {
+            if {!$first} { append json "," }
+            # JSON 문자열 이스케이프
+            regsub -all {\"} $session_reset {\\\"} escaped_reset
+            append json "\"session_reset\":\"$escaped_reset\""
+            set first 0
+        }
+        if {$weekly_pct ne ""} {
+            if {!$first} { append json "," }
+            append json "\"weekly_used\":$weekly_pct"
+            set first 0
+        }
+        if {$weekly_reset ne ""} {
+            if {!$first} { append json "," }
+            regsub -all {\"} $weekly_reset {\\\"} escaped_reset
+            append json "\"weekly_reset\":\"$escaped_reset\""
+            set first 0
+        }
+        if {$error_msg ne ""} {
+            if {!$first} { append json "," }
+            append json "\"error\":\"$error_msg\""
+        }
+        
+        append json "}"
+        puts $json
+    } else {
+        # 기존 KEY:VALUE 형식
+        if {$session_pct ne ""} {
+            puts "SESSION_USED:$session_pct"
+        }
+        if {$session_reset ne ""} {
+            puts "SESSION_RESET:$session_reset"
+        }
+        if {$weekly_pct ne ""} {
+            puts "WEEKLY_USED:$weekly_pct"
+        }
+        if {$weekly_reset ne ""} {
+            puts "WEEKLY_RESET:$weekly_reset"
+        }
+        if {$error_msg ne ""} {
+            puts "ERROR:$error_msg"
+        }
+    }
+}
+
+# 우아한 프로세스 종료 - SIGTERM -> 대기 -> SIGKILL 순서
+proc exit_cli {} {
+    global spawn_id GRACEFUL_EXIT_WAIT_SEC
+    set pid [exp_pid]
+    
+    debug_log "Exiting CLI (PID: $pid)"
+    
+    # 1단계: 키보드 시그널로 우아한 종료 시도
+    catch {
+        send "\x1b"
+        sleep 0.1
+        send "\x03"
+    }
+    sleep 0.2
+    
+    # 2단계: SIGTERM으로 정중한 종료 요청
+    if {[catch {exec kill -15 $pid} err]} {
+        debug_log "SIGTERM failed (already dead?): $err"
+    } else {
+        debug_log "Sent SIGTERM, waiting for graceful exit..."
+        # 우아한 종료 대기
+        sleep $GRACEFUL_EXIT_WAIT_SEC
+    }
+    
+    # 3단계: 여전히 살아있으면 SIGKILL로 강제 종료
+    if {![catch {exec kill -0 $pid}]} {
+        debug_log "Process still alive, sending SIGKILL"
+        catch {exec kill -9 $pid}
+        catch {exec pkill -9 -P $pid}
+    }
+    
+    # expect 정리
+    catch {close -i $spawn_id}
+    catch {wait -i $spawn_id -nowait}
+    
+    debug_log "CLI exit complete"
+}
+
+# ============================================================================
+# 메인 실행
+# ============================================================================
+
+debug_log "Starting claude-usage.exp"
+debug_log "CLI path: $claude_cli"
+debug_log "Debug mode: $debug_mode"
+debug_log "JSON output: $json_output"
+
+# CLI /usage 명령으로 스폰
+set cmd [list $claude_cli "/usage"]
+if {[catch {eval spawn $cmd} err]} {
+    output_results "" "" "" "" "spawn:$err"
+    exit 127
+}
+
+debug_log "Spawned CLI, waiting $INIT_WAIT_SEC seconds for initialization..."
+
+# CLI 초기화 대기
+sleep $INIT_WAIT_SEC
+
+# 출력 누적
+set full_output ""
+set timeout_occurred 0
+
+# ============================================================================
+# 출력 수집 - 세션 및 주간 데이터 대기
+# CLI는 3개 섹션 출력: 세션, 주간(전체 모델), 주간(Sonnet만)
+# 필요한 것: 세션 + 주간(전체 모델)
+# ============================================================================
+expect {
+    -re {Trust this folder|Enter to confirm|Do you trust} {
+        debug_log "Trust prompt detected, confirming..."
+        sleep 0.3
+        send "\r"
+        exp_continue
+    }
+    -re {.+} {
+        append full_output $expect_out(0,string)
+        
+        # ANSI 제거 후 매칭 카운트 (strip_ansi 함수 사용)
+        set temp_clean [strip_ansi $full_output]
+        
+        # 모든 "% used" 패턴 카운트 (대소문자 무시)
+        set pct_matches [regexp -all -nocase {\d+%\s*used} $temp_clean]
+        set has_sonnet [regexp -nocase {sonnet} $temp_clean]
+        
+        debug_log "Found $pct_matches percentage matches, Sonnet: $has_sonnet"
+        
+        # 완료 조건: Sonnet 포함 3+ 섹션 또는 Sonnet 없이 2+ 섹션
+        if {$pct_matches >= 3 && $has_sonnet} {
+            debug_log "All 3 sections loaded"
+        } elseif {$pct_matches >= 2 && !$has_sonnet} {
+            debug_log "2 sections loaded (no Sonnet), waiting a bit more..."
+            sleep $SECTION_LOAD_WAIT_SEC
+        } else {
+            exp_continue
+        }
+    }
+    timeout {
+        set timeout_occurred 1
+        debug_log "WARNING: Timeout occurred after $TIMEOUT_SEC seconds"
+    }
+}
+
+# CLI 종료
+exit_cli
+
+# ============================================================================
+# 파싱 규칙 - 수정 전 이해 필수
+# ============================================================================
+#
+# 순서 기반 파싱을 사용하는 이유 (키워드 기반 X):
+# --------------------------------------------
+# Claude CLI는 TUI(Ink 프레임워크)를 사용하며 커서 이동, 색상, 레이아웃에
+# ANSI 이스케이프 코드를 사용합니다. ANSI 코드 제거 시 텍스트가 손상됩니다:
+#
+#   이전 (원본 TUI):  "3% used\n\033[2KResets 4:59pm"
+#   이후 (정리됨):    "3%usedReses4:59pm"  <-- 텍스트 병합, "Resets" -> "Reses"
+#
+# "Resets" 키워드가 종종 손상되므로 신뢰할 수 없습니다.
+# 대신 순서 기반 파싱 사용: 패턴을 순서대로 찾습니다.
+#
+# CLI 출력 순서:
+# --------------
+# 1. 현재 세션     -> % used -> 리셋 시간 (시간만, 예: "4:59pm")
+# 2. 현재 주(전체) -> % used -> 리셋 시간 (날짜+시간, 예: "Dec 16, 10:59am")
+# 3. 현재 주(Sonnet) -> % used -> 리셋 시간 (무시)
+#
+# 주의:
+# -----
+# - "Resets" 키워드 사용 금지 - ANSI 제거로 손상됨
+# - 패턴 순서 변경 금지 - CLI 출력 순서 고정
+# - 분이 생략될 수 있음 (예: "5pm" instead of "5:00pm")
+# - AM/PM 대소문자 혼용 가능
+#
+# ============================================================================
+
+# ANSI 시퀀스 제거 (strip_ansi 함수 사용)
+set clean_output [strip_ansi $full_output]
+
+debug_log "Clean output length: [string length $clean_output] chars"
+
+set session_pct ""
+set weekly_pct ""
+set session_reset ""
+set weekly_reset ""
+
+# --- 퍼센트 파싱 ---
+# 모든 "XX% used" 패턴을 출현 순서대로 찾기
+# 결과: 첫 번째 = 세션, 두 번째 = 주간(전체 모델)
+set pct_matches [regexp -all -inline -nocase {(\d+)%\s*used} $clean_output]
+if {[llength $pct_matches] >= 2} {
+    set session_pct [lindex $pct_matches 1]
+    debug_log "Session percentage: $session_pct%"
+}
+if {[llength $pct_matches] >= 4} {
+    set weekly_pct [lindex $pct_matches 3]
+    debug_log "Weekly percentage: $weekly_pct%"
+}
+
+# --- 리셋 시간 파싱 ---
+# 시간 패턴: "H:MMam/pm (Timezone)" 또는 "Hpm (Timezone)"
+set time_pattern {(\d{1,2}(?::\d{2})?[aApP][mM])\s*\(([^)]+)\)}
+
+# 주간용 날짜+시간 패턴: "Mon DD, H:MMam/pm (Timezone)"
+set date_time_pattern {((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep(?:t|tember)?|Oct|Nov|Dec)\s+\d{1,2},?\s+\d{1,2}(?::\d{2})?[aApP][mM])\s*\(([^)]+)\)}
+
+# 모든 시간 패턴을 순서대로 찾기
+set all_times [regexp -all -inline -nocase $time_pattern $clean_output]
+
+# 첫 번째 시간 = 세션 리셋 (오늘, 시간만)
+if {[llength $all_times] >= 3} {
+    set session_time [lindex $all_times 1]
+    set session_tz [lindex $all_times 2]
+    set session_reset "$session_time ($session_tz)"
+    debug_log "Session reset: $session_reset"
+}
+
+# 두 번째 시간 = 주간 리셋 (날짜 + 시간)
+# 섹션 기반 추출 시도 (정확한 날짜 추출용)
+if {[regexp -nocase {Current\s*week\s*\(all[^)]*\)(.+)} $clean_output - weekly_section]} {
+    if {[regexp -nocase $date_time_pattern $weekly_section - dt_match tz_match]} {
+        set weekly_reset "$dt_match ($tz_match)"
+        debug_log "Weekly reset (from section): $weekly_reset"
+    }
+}
+
+# 폴백: 섹션 파싱 실패 시 두 번째 시간 패턴 사용
+if {$weekly_reset eq "" && [llength $all_times] >= 6} {
+    set weekly_time [lindex $all_times 4]
+    set weekly_tz [lindex $all_times 5]
+    set weekly_reset "$weekly_time ($weekly_tz)"
+    debug_log "Weekly reset (fallback): $weekly_reset"
+}
+
+# ============================================================================
+# 결과 출력
+# ============================================================================
+
+set error_msg ""
+set exit_code 0
+
+if {$session_pct eq ""} {
+    set error_msg "parse_failed"
+    set exit_code 1
+    debug_log "ERROR: Failed to parse session data"
+} elseif {$timeout_occurred} {
+    # 타임아웃 발생했지만 일부 데이터 파싱 성공
+    set error_msg "partial_timeout"
+    set exit_code 2
+    debug_log "WARNING: Partial data due to timeout"
+}
+
+output_results $session_pct $session_reset $weekly_pct $weekly_reset $error_msg
+
+debug_log "Exiting with code $exit_code"
+exit $exit_code

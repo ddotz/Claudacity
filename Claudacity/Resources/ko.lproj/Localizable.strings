@@ -1,0 +1,90 @@
+/* 
+  Localizable.strings (Korean)
+  Claudacity
+*/
+
+// MARK: - App
+"app.name" = "Claudacity";
+
+// MARK: - Tabs
+"tab.usage" = "사용량";
+"tab.stats" = "통계";
+
+// MARK: - Settings
+"settings.appearance" = "외관";
+"settings.notifications" = "알림";
+"settings.general" = "일반";
+"settings.theme" = "테마";
+"settings.icon_style" = "아이콘 스타일";
+"settings.icon" = "아이콘";
+"settings.preview" = "미리보기";
+"settings.display_options" = "표시 옵션";
+"settings.show_percentage" = "퍼센트 표시";
+"settings.show_reset_time" = "리셋 시간 표시";
+"settings.time_format" = "시간 형식";
+"settings.show_progress_bar" = "프로그레스바 표시";
+"settings.display_mode" = "표시 모드";
+"settings.low_notification" = "잔량 낮음 알림";
+"settings.critical_notification" = "거의 소진 알림";
+"settings.threshold" = "임계값";
+"settings.startup" = "시작";
+"settings.launch_at_login" = "로그인 시 자동 실행";
+"settings.launch_help" = "Mac 시작 시 Claudacity가 자동으로 실행됩니다";
+"settings.refresh" = "새로고침";
+"settings.refresh_interval" = "새로고침 간격";
+"settings.about" = "정보";
+"settings.version" = "버전";
+
+// MARK: - Theme
+"theme.system" = "시스템";
+"theme.light" = "라이트";
+"theme.dark" = "다크";
+
+// MARK: - Icon Style
+"icon.claudacity" = "Claudacity";
+"icon.gauge" = "게이지";
+"icon.circle" = "원형";
+"icon.energy" = "에너지";
+"icon.minimal" = "미니멀";
+"icon.classic" = "클래식";
+"icon.brain" = "브레인";
+"icon.sparkle" = "스파클";
+"icon.chart" = "차트";
+
+// MARK: - Display Mode
+"display.session" = "세션";
+"display.weekly" = "주간";
+"display.all" = "전체";
+
+// MARK: - Reset Time Format
+"time_format.absolute" = "리셋 시각";
+"time_format.remaining" = "남은 시간";
+
+// MARK: - Chart
+"chart.no_data" = "데이터 없음";
+"chart.token_usage" = "토큰 사용량";
+
+// MARK: - Usage
+"usage.loading" = "사용량 조회 중...";
+"usage.loading_desc" = "Claude CLI에서 사용량 정보를 가져오는 중입니다";
+"usage.cli_status" = "CLI 상태:";
+"usage.cli_installed" = "Claude CLI 설치됨:";
+"usage.cli_available" = "CLI /usage 사용 가능:";
+"usage.session_used" = "세션 사용";
+"usage.weekly_used" = "주간 사용";
+
+// MARK: - Common
+"common.yes" = "예";
+"common.no" = "아니오";
+"common.refresh" = "새로고침";
+"common.reset" = "리셋:";
+
+// MARK: - Time Intervals
+"time.5min" = "5분";
+"time.10min" = "10분";
+"time.15min" = "15분";
+"time.30min" = "30분";
+
+// MARK: - Period
+"period.24h" = "24시간";
+"period.7d" = "7일";
