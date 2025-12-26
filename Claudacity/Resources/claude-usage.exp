@@ -3,7 +3,7 @@
 # claude-usage.exp - Claude CLI 사용량 조회 스크립트 (Interactive Mode)
 # ============================================================================
 
-set timeout 30
+set timeout 10
 log_user 0
 
 # Debug log file
@@ -26,7 +26,7 @@ set cmd "$claude_cli /usage"
 puts $log_fd "Executing command: $cmd"
 flush $log_fd
 
-if {[catch {spawn /bin/sh -c $cmd} err]} {
+if {[catch {spawn {*}[split $cmd]} err]} {
     puts $log_fd "ERROR: Failed to spawn: $err"
     puts "ERROR:spawn:$err"
     close $log_fd
@@ -60,11 +60,10 @@ expect {
         }
 
         if {$pct_count >= 2} {
-            # Got both session and weekly, wait a bit more for completion
+            # Got both session and weekly, exit immediately
             puts $log_fd "Found both session and weekly data, exiting..."
             flush $log_fd
-            sleep 1
-            # Exit the expect loop
+            # Exit the expect loop immediately to avoid interfering with parent session
         } else {
             # Keep reading
             exp_continue
@@ -72,7 +71,7 @@ expect {
     }
     timeout {
         # Timeout reached, process whatever we have
-        puts $log_fd "TIMEOUT: Reached after 30 seconds"
+        puts $log_fd "TIMEOUT: Reached after 10 seconds"
         flush $log_fd
     }
     eof {
@@ -85,12 +84,8 @@ expect {
 puts $log_fd "Expect loop finished"
 flush $log_fd
 
-# Try to exit gracefully
-catch {
-    send "\x1b"
-    sleep 0.1
-    send "\x03"
-}
+# Close the spawned process gracefully without sending control characters
+# Sending ESC/Ctrl+C can interfere with the parent terminal session
 catch {close}
 catch {wait}
 

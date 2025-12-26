@@ -166,19 +166,34 @@ final class CLIUsageService: CLIUsageServiceProtocol, @unchecked Sendable {
             process.standardOutput = pipe
             process.standardError = pipe
 
-            // 환경 변수
-            var env = ProcessInfo.processInfo.environment
-            env["CLAUDE_USAGE_CLI_PATH"] = claudePath
-            process.environment = env
+            // 환경 변수 - 필요한 것만 명시적으로 설정 (권한 요청 방지)
+            // Note: ProcessInfo.processInfo.environment 전체를 자식 프로세스에 전달하면
+            // iTunes/Music 폴더 등 보호된 디렉토리 경로가 포함되어 권한 요청을 유발할 수 있음
+            // 따라서 필요한 환경 변수만 개별적으로 읽어서 전달
 
-            // 타임아웃 (30초)
+            // HOME 경로는 환경 변수에서 가져오기 (커스텀 홈 디렉토리 지원)
+            let homeDir = ProcessInfo.processInfo.environment["HOME"] ?? "/Users/\(NSUserName())"
+
+            // Claude CLI 디렉토리를 PATH에 추가 (CLI 내부에서 필요할 수 있음)
+            let claudeDir = (claudePath as NSString).deletingLastPathComponent
+            let pathValue = "\(claudeDir):/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin"
+
+            let environment: [String: String] = [
+                "PATH": pathValue,
+                "HOME": homeDir,
+                "LANG": "en_US.UTF-8",
+                "CLAUDE_USAGE_CLI_PATH": claudePath
+            ]
+            process.environment = environment
+
+            // 타임아웃 (15초 - expect 스크립트는 10초)
             let timeoutWork = DispatchWorkItem { [weak process] in
                 if let p = process, p.isRunning {
-                    logWarning("Expect script timed out after 30s", category: .cli)
+                    logWarning("Expect script timed out after 15s", category: .cli)
                     p.terminate()
                 }
             }
-            DispatchQueue.global().asyncAfter(deadline: .now() + 30, execute: timeoutWork)
+            DispatchQueue.global().asyncAfter(deadline: .now() + 15, execute: timeoutWork)
 
             do {
                 try process.run()
