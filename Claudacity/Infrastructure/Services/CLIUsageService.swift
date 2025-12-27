@@ -55,6 +55,7 @@ protocol CLIUsageServiceProtocol: Sendable {
     func isAvailable() async -> Bool
     func resetClaudePath()
     func getCachedClaudePath() -> String?
+    func setManualClaudePath(_ path: String) -> Bool
 }
 
 // MARK: - CLI Usage Service Implementation
@@ -122,16 +123,8 @@ final class CLIUsageService: CLIUsageServiceProtocol, @unchecked Sendable {
             return persistedPath
         }
 
-        // 3. 환경 변수에서 확인
-        if let envPath = ProcessInfo.processInfo.environment["CLAUDE_USAGE_CLI_PATH"],
-           fileManager.fileExists(atPath: envPath) {
-            cachedClaudePath = envPath
-            saveClaudePathToUserDefaults(envPath)
-            logDebug("Claude found via env: \(envPath)", category: .cli)
-            return envPath
-        }
-
-        // 4. 파일 시스템 탐색 (첫 실행 시에만 발생)
+        // 3. 파일 시스템 탐색 (첫 실행 시에만 발생)
+        // Note: 환경 변수 체크를 제거함 (ProcessInfo.processInfo.environment 접근 시 권한 요청 발생)
         logDebug("No cached path found, scanning file system (first run)...", category: .cli)
         if let foundPath = scanFileSystemForClaudePath() {
             cachedClaudePath = foundPath
@@ -194,6 +187,24 @@ final class CLIUsageService: CLIUsageServiceProtocol, @unchecked Sendable {
         return UserDefaults.standard.string(forKey: Self.claudePathKey)
     }
 
+    /// 수동으로 Claude CLI 경로 설정 (파일 시스템 탐색 없이 직접 지정)
+    /// - Parameter path: Claude CLI 실행 파일의 절대 경로
+    /// - Returns: 경로가 유효하면 true, 아니면 false
+    func setManualClaudePath(_ path: String) -> Bool {
+        // 경로 유효성 검증
+        guard !path.isEmpty, fileManager.fileExists(atPath: path) else {
+            logWarning("Invalid Claude CLI path: \(path)", category: .cli)
+            return false
+        }
+
+        // 메모리 캐시 및 UserDefaults에 저장
+        cachedClaudePath = path
+        saveClaudePathToUserDefaults(path)
+        logInfo("Manually set Claude CLI path: \(path)", category: .cli)
+
+        return true
+    }
+
     /// expect 스크립트를 사용한 Claude CLI /usage 실행
     private func runClaudeUsageWithScript(claudePath: String) async throws -> String {
         logDebug("Running Claude CLI /usage via expect script", category: .cli)
@@ -217,12 +228,13 @@ final class CLIUsageService: CLIUsageServiceProtocol, @unchecked Sendable {
             process.standardError = pipe
 
             // 환경 변수 - 필요한 것만 명시적으로 설정 (권한 요청 방지)
-            // Note: ProcessInfo.processInfo.environment 전체를 자식 프로세스에 전달하면
-            // iTunes/Music 폴더 등 보호된 디렉토리 경로가 포함되어 권한 요청을 유발할 수 있음
-            // 따라서 필요한 환경 변수만 개별적으로 읽어서 전달
+            // Note: ProcessInfo.processInfo.environment에 접근하면
+            // 전체 환경 변수 딕셔너리가 로드되면서 iTunes/Music 폴더 등
+            // 보호된 디렉토리 경로가 포함되어 권한 요청을 유발함
+            // 따라서 environment에 접근하지 않고 직접 경로를 구성
 
-            // HOME 경로는 환경 변수에서 가져오기 (커스텀 홈 디렉토리 지원)
-            let homeDir = ProcessInfo.processInfo.environment["HOME"] ?? "/Users/\(NSUserName())"
+            // HOME 경로 직접 구성 (NSUserName() 사용 - 권한 요청 없음)
+            let homeDir = "/Users/\(NSUserName())"
 
             // Claude CLI 디렉토리를 PATH에 추가 (CLI 내부에서 필요할 수 있음)
             let claudeDir = (claudePath as NSString).deletingLastPathComponent
@@ -484,5 +496,10 @@ final class MockCLIUsageService: CLIUsageServiceProtocol, @unchecked Sendable {
 
     func getCachedClaudePath() -> String? {
         return mockPath
+    }
+
+    func setManualClaudePath(_ path: String) -> Bool {
+        mockPath = path
+        return true
     }
 }

@@ -341,14 +341,12 @@ final class UsageViewModel: ObservableObject {
         // Setup session detector callbacks
         setupSessionDetectorCallbacks()
 
-        // Load sessions and check CLI availability
+        // Load sessions only (CLI availability check delayed to first usage)
         Task {
             self.writeDebugLog("UsageViewModel init - starting Task")
             await loadSessions()
             await sessionDetector.startMonitoring()
-            await checkClaudeCodeInstallation()
-            // CLI /usage 서비스 사용 가능 여부 확인
-            await checkCLIUsageAvailability()
+            // CLI 가용성 체크와 서비스 가용성 체크는 첫 사용 시 지연 로딩 (권한 요청 최소화)
             // 초기 데이터 로드는 startAutoRefresh()에서 loadUsage()로 처리됨
             self.writeDebugLog("UsageViewModel init - completed")
         }
@@ -608,9 +606,9 @@ final class UsageViewModel: ObservableObject {
 
     /// CLI /usage 명령으로 사용량 로드 (Expect 스크립트 전용)
     func loadCLIUsage() async {
-        // 서비스 사용 가능 여부 확인, 없으면 재확인
+        // 첫 호출 시에만 서비스 사용 가능 여부 확인 (지연 로딩으로 권한 요청 최소화)
         if !isCLIUsageAvailable {
-            logDebug("CLI /usage not available, rechecking...", category: .cli)
+            logDebug("First CLI /usage check, verifying availability...", category: .cli)
             await checkCLIUsageAvailability()
         }
 

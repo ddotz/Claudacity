@@ -257,6 +257,8 @@ struct GeneralSettingsView: View {
     @ObservedObject var settingsStore: SettingsStore
     @State private var cachedPath: String?
     @State private var showResetConfirmation = false
+    @State private var showManualPathAlert = false
+    @State private var manualPathAlertMessage = ""
 
     private var refreshOptions: [(String, TimeInterval)] {
         [
@@ -312,14 +314,24 @@ struct GeneralSettingsView: View {
                             .italic()
                     }
 
-                    Button {
-                        showResetConfirmation = true
-                    } label: {
-                        Label("Reset CLI Path", systemImage: "arrow.clockwise")
+                    HStack(spacing: 12) {
+                        Button {
+                            selectManualPath()
+                        } label: {
+                            Label("Set Manual Path", systemImage: "folder")
+                        }
+                        .buttonStyle(.link)
+                        .help("Manually specify Claude CLI path to avoid file system scanning")
+
+                        Button {
+                            showResetConfirmation = true
+                        } label: {
+                            Label("Reset CLI Path", systemImage: "arrow.clockwise")
+                        }
+                        .buttonStyle(.link)
+                        .disabled(cachedPath == nil)
+                        .help("Reset cached CLI path. App will rescan on next usage.")
                     }
-                    .buttonStyle(.link)
-                    .disabled(cachedPath == nil)
-                    .help("Reset cached CLI path. App will rescan on next usage.")
                 }
             }
 
@@ -346,6 +358,11 @@ struct GeneralSettingsView: View {
         } message: {
             Text("This will clear the cached CLI path. The app will rescan for the Claude CLI on next usage.")
         }
+        .alert("Manual Path Result", isPresented: $showManualPathAlert) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text(manualPathAlertMessage)
+        }
     }
 
     private func updateCachedPath() {
@@ -355,6 +372,39 @@ struct GeneralSettingsView: View {
     private func resetCLIPath() {
         Dependencies.shared.cliUsageService.resetClaudePath()
         updateCachedPath()
+    }
+
+    private func selectManualPath() {
+        let openPanel = NSOpenPanel()
+        openPanel.title = "Select Claude CLI Executable"
+        openPanel.message = "Select the Claude CLI executable file (usually located in ~/.claude/local/claude)"
+        openPanel.canChooseFiles = true
+        openPanel.canChooseDirectories = false
+        openPanel.allowsMultipleSelection = false
+        openPanel.showsHiddenFiles = true
+
+        // Set initial directory to common Claude CLI location
+        // Note: NSUserName() 사용 (homeDirectoryForCurrentUser는 권한 요청 유발)
+        let claudeDirPath = "/Users/\(NSUserName())/.claude/local"
+        if FileManager.default.fileExists(atPath: claudeDirPath) {
+            openPanel.directoryURL = URL(fileURLWithPath: claudeDirPath)
+        }
+
+        openPanel.begin { response in
+            guard response == .OK, let url = openPanel.url else { return }
+
+            let path = url.path
+            let success = Dependencies.shared.cliUsageService.setManualClaudePath(path)
+
+            if success {
+                updateCachedPath()
+                manualPathAlertMessage = "Successfully set Claude CLI path:\n\(path)"
+            } else {
+                manualPathAlertMessage = "Invalid path or file does not exist:\n\(path)"
+            }
+
+            showManualPathAlert = true
+        }
     }
 
     private func formatTokens(_ tokens: Int64) -> String {
