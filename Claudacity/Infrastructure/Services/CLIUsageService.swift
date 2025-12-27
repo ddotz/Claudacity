@@ -53,6 +53,8 @@ struct CLIUsageResult: Sendable, Equatable {
 protocol CLIUsageServiceProtocol: Sendable {
     func fetchUsage() async throws -> CLIUsageResult
     func isAvailable() async -> Bool
+    func resetClaudePath()
+    func getCachedClaudePath() -> String?
 }
 
 // MARK: - CLI Usage Service Implementation
@@ -64,6 +66,9 @@ final class CLIUsageService: CLIUsageServiceProtocol, @unchecked Sendable {
     private let fileManager: FileManager
     private let timeout: TimeInterval
     private var cachedClaudePath: String?
+
+    // UserDefaults key for persistent CLI path storage
+    private static let claudePathKey = "claudeCliPath"
 
     // MARK: - Init
 
@@ -103,20 +108,51 @@ final class CLIUsageService: CLIUsageServiceProtocol, @unchecked Sendable {
 
     /// Claude CLI 경로 찾기
     private func getClaudePath() async -> String? {
+        // 1. 메모리 캐시 확인 (앱 실행 중 여러 번 호출될 때 빠른 응답)
         if let cached = cachedClaudePath, fileManager.fileExists(atPath: cached) {
-            logDebug("Using cached Claude path: \(cached)", category: .cli)
+            logDebug("Using memory-cached Claude path: \(cached)", category: .cli)
             return cached
         }
 
-        // 환경 변수에서 확인
+        // 2. UserDefaults 영구 캐시 확인 (앱 재시작 후에도 유지)
+        if let persistedPath = UserDefaults.standard.string(forKey: Self.claudePathKey),
+           fileManager.fileExists(atPath: persistedPath) {
+            cachedClaudePath = persistedPath
+            logDebug("Using UserDefaults cached Claude path: \(persistedPath)", category: .cli)
+            return persistedPath
+        }
+
+        // 3. 환경 변수에서 확인
         if let envPath = ProcessInfo.processInfo.environment["CLAUDE_USAGE_CLI_PATH"],
            fileManager.fileExists(atPath: envPath) {
             cachedClaudePath = envPath
+            saveClaudePathToUserDefaults(envPath)
             logDebug("Claude found via env: \(envPath)", category: .cli)
             return envPath
         }
 
-        // 일반적인 경로들 먼저 확인 (which보다 빠르고 확실함)
+        // 4. 파일 시스템 탐색 (첫 실행 시에만 발생)
+        logDebug("No cached path found, scanning file system (first run)...", category: .cli)
+        if let foundPath = scanFileSystemForClaudePath() {
+            cachedClaudePath = foundPath
+            saveClaudePathToUserDefaults(foundPath)
+            logInfo("Claude CLI found and cached at: \(foundPath)", category: .cli)
+            return foundPath
+        }
+
+        // Note: which 명령어 실행은 bash shell 초기화 과정에서 사용자 설정 파일을 읽으면서
+        // 사진, 네트워크 볼륨 등 보호된 디렉토리 접근 권한 요청을 유발할 수 있으므로 제거됨.
+        // 위의 commonPaths에서 찾지 못하면 Claude CLI가 설치되지 않은 것으로 간주.
+
+        logWarning("Claude CLI not found in common paths", category: .cli)
+        return nil
+    }
+
+    /// 파일 시스템에서 Claude CLI 경로 검색 (권한 요청 발생 가능)
+    private func scanFileSystemForClaudePath() -> String? {
+        // Note: 이 함수는 처음 한 번만 실행되며, 권한 요청이 발생할 수 있습니다.
+        // 찾은 경로는 UserDefaults에 저장되어 이후 실행 시에는 이 함수가 호출되지 않습니다.
+
         // Note: NSHomeDirectory()는 보호된 폴더 접근 권한 요청을 유발하므로 사용하지 않음
         let homeDir = "/Users/\(NSUserName())"
         let commonPaths = [
@@ -130,18 +166,32 @@ final class CLIUsageService: CLIUsageServiceProtocol, @unchecked Sendable {
 
         for path in commonPaths {
             if fileManager.fileExists(atPath: path) {
-                cachedClaudePath = path
-                logDebug("Claude found at: \(path)", category: .cli)
                 return path
             }
         }
 
-        // Note: which 명령어 실행은 bash shell 초기화 과정에서 사용자 설정 파일을 읽으면서
-        // 사진, 네트워크 볼륨 등 보호된 디렉토리 접근 권한 요청을 유발할 수 있으므로 제거됨.
-        // 위의 commonPaths에서 찾지 못하면 Claude CLI가 설치되지 않은 것으로 간주.
-
-        logWarning("Claude CLI not found in common paths", category: .cli)
         return nil
+    }
+
+    /// UserDefaults에 Claude CLI 경로 저장
+    private func saveClaudePathToUserDefaults(_ path: String) {
+        UserDefaults.standard.set(path, forKey: Self.claudePathKey)
+        logDebug("Saved Claude CLI path to UserDefaults: \(path)", category: .cli)
+    }
+
+    /// UserDefaults에서 저장된 경로 삭제 (경로가 더 이상 유효하지 않을 때)
+    func resetClaudePath() {
+        UserDefaults.standard.removeObject(forKey: Self.claudePathKey)
+        cachedClaudePath = nil
+        logInfo("Reset cached Claude CLI path", category: .cli)
+    }
+
+    /// 현재 캐시된 CLI 경로 반환
+    func getCachedClaudePath() -> String? {
+        if let cached = cachedClaudePath {
+            return cached
+        }
+        return UserDefaults.standard.string(forKey: Self.claudePathKey)
     }
 
     /// expect 스크립트를 사용한 Claude CLI /usage 실행
@@ -409,6 +459,7 @@ final class MockCLIUsageService: CLIUsageServiceProtocol, @unchecked Sendable {
     var mockResult: CLIUsageResult?
     var shouldFail = false
     var isInstalled = true
+    var mockPath: String? = "/usr/local/bin/claude"
 
     func fetchUsage() async throws -> CLIUsageResult {
         if shouldFail {
@@ -425,5 +476,13 @@ final class MockCLIUsageService: CLIUsageServiceProtocol, @unchecked Sendable {
 
     func isAvailable() async -> Bool {
         return isInstalled
+    }
+
+    func resetClaudePath() {
+        mockPath = nil
+    }
+
+    func getCachedClaudePath() -> String? {
+        return mockPath
     }
 }

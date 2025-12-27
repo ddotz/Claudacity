@@ -255,6 +255,8 @@ struct NotificationSettingsView: View {
 // MARK: - General Settings
 struct GeneralSettingsView: View {
     @ObservedObject var settingsStore: SettingsStore
+    @State private var cachedPath: String?
+    @State private var showResetConfirmation = false
 
     private var refreshOptions: [(String, TimeInterval)] {
         [
@@ -288,6 +290,39 @@ struct GeneralSettingsView: View {
                 }
             }
 
+            // CLI Path Section
+            Section("Claude CLI") {
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack {
+                        Text("Cached Path:")
+                            .foregroundColor(.secondary)
+                        Spacer()
+                    }
+
+                    if let path = cachedPath {
+                        Text(path)
+                            .font(.system(.caption, design: .monospaced))
+                            .foregroundColor(.primary)
+                            .textSelection(.enabled)
+                            .lineLimit(2)
+                    } else {
+                        Text("Not set (will scan on next usage)")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                            .italic()
+                    }
+
+                    Button {
+                        showResetConfirmation = true
+                    } label: {
+                        Label("Reset CLI Path", systemImage: "arrow.clockwise")
+                    }
+                    .buttonStyle(.link)
+                    .disabled(cachedPath == nil)
+                    .help("Reset cached CLI path. App will rescan on next usage.")
+                }
+            }
+
             // About Section
             Section(String(localized: "settings.about")) {
                 HStack {
@@ -300,6 +335,26 @@ struct GeneralSettingsView: View {
         }
         .formStyle(.grouped)
         .padding()
+        .onAppear {
+            updateCachedPath()
+        }
+        .alert("Reset CLI Path?", isPresented: $showResetConfirmation) {
+            Button("Cancel", role: .cancel) { }
+            Button("Reset", role: .destructive) {
+                resetCLIPath()
+            }
+        } message: {
+            Text("This will clear the cached CLI path. The app will rescan for the Claude CLI on next usage.")
+        }
+    }
+
+    private func updateCachedPath() {
+        cachedPath = Dependencies.shared.cliUsageService.getCachedClaudePath()
+    }
+
+    private func resetCLIPath() {
+        Dependencies.shared.cliUsageService.resetClaudePath()
+        updateCachedPath()
     }
 
     private func formatTokens(_ tokens: Int64) -> String {
