@@ -19,12 +19,14 @@ struct UsageTabView: View {
         }
         .padding(.horizontal)
         .padding(.vertical, Dimensions.Spacing.medium)
-        .task {
-            await viewModel.loadAllChartData()
-        }
+        // Note: .task 제거 - 권한 요청 방지를 위해 차트 자동 로드 비활성화
+        // 차트 데이터는 사용자가 명시적으로 요청할 때만 로드됨
         .onChange(of: selectedPeriod) { _, newPeriod in
             Task {
-                await viewModel.loadChartData(for: newPeriod)
+                // 차트가 표시될 때만 로드 (차트 데이터가 비어있지 않을 때만)
+                if !viewModel.chartData(for: newPeriod).isEmpty {
+                    await viewModel.loadChartData(for: newPeriod)
+                }
             }
         }
     }

@@ -71,29 +71,39 @@ final class ClaudeLogReaderImpl: ClaudeLogReader, @unchecked Sendable {
         }
 
         do {
+            // 심볼릭 링크를 따라가지 않도록 옵션 추가 (권한 요청 방지)
             let contents = try fileManager.contentsOfDirectory(
                 at: claudeDir,
-                includingPropertiesForKeys: [.isDirectoryKey],
-                options: [.skipsHiddenFiles]
+                includingPropertiesForKeys: [.isDirectoryKey, .isSymbolicLinkKey],
+                options: [.skipsHiddenFiles, .skipsPackageDescendants]
             )
             NSLog("[ClaudeLogReader] Found %d items in directory", contents.count)
 
             // 디렉토리이면서 .jsonl 파일이 있는 것만 필터링
+            // 심볼릭 링크는 건너뜀 (권한 요청 방지)
             let dirs = contents.filter { url in
+                // 심볼릭 링크 체크 (권한 요청 방지)
+                if let isSymlink = try? url.resourceValues(forKeys: [.isSymbolicLinkKey]).isSymbolicLink,
+                   isSymlink == true {
+                    NSLog("[ClaudeLogReader] Skipping symbolic link: %@", url.lastPathComponent)
+                    return false
+                }
+
                 var isDirectory: ObjCBool = false
                 let exists = fileManager.fileExists(atPath: url.path, isDirectory: &isDirectory)
                 guard exists && isDirectory.boolValue else { return false }
-                
+
                 // .jsonl 파일이 있는지 확인
                 do {
                     let subContents = try fileManager.contentsOfDirectory(
                         at: url,
-                        includingPropertiesForKeys: nil,
-                        options: [.skipsHiddenFiles]
+                        includingPropertiesForKeys: [.isSymbolicLinkKey],
+                        options: [.skipsHiddenFiles, .skipsPackageDescendants]
                     )
                     let hasJsonl = subContents.contains { $0.pathExtension == "jsonl" }
                     return hasJsonl
                 } catch {
+                    NSLog("[ClaudeLogReader] Error reading subdirectory %@: %@", url.lastPathComponent, error.localizedDescription)
                     return false
                 }
             }
@@ -112,18 +122,27 @@ final class ClaudeLogReaderImpl: ClaudeLogReader, @unchecked Sendable {
             logger.debug("Project directory not found: \(projectDir.lastPathComponent)")
             return []
         }
-        
+
         var allEntries: [ClaudeLogEntry] = []
-        
+
         do {
+            // 심볼릭 링크를 건너뛰도록 옵션 추가 (권한 요청 방지)
             let contents = try fileManager.contentsOfDirectory(
                 at: projectDir,
-                includingPropertiesForKeys: nil,
-                options: [.skipsHiddenFiles]
+                includingPropertiesForKeys: [.isSymbolicLinkKey],
+                options: [.skipsHiddenFiles, .skipsPackageDescendants]
             )
-            
-            let jsonlFiles = contents.filter { $0.pathExtension == "jsonl" }
-            
+
+            // 심볼릭 링크가 아닌 .jsonl 파일만 필터링
+            let jsonlFiles = contents.filter { url in
+                // 심볼릭 링크 건너뛰기
+                if let isSymlink = try? url.resourceValues(forKeys: [.isSymbolicLinkKey]).isSymbolicLink,
+                   isSymlink == true {
+                    return false
+                }
+                return url.pathExtension == "jsonl"
+            }
+
             for logFile in jsonlFiles {
                 let entries = try await readSingleFile(logFile)
                 allEntries.append(contentsOf: entries)
@@ -131,7 +150,7 @@ final class ClaudeLogReaderImpl: ClaudeLogReader, @unchecked Sendable {
         } catch {
             logger.error("Failed to read project directory: \(error.localizedDescription)")
         }
-        
+
         return allEntries
     }
     
