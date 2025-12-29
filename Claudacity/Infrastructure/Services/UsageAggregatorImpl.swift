@@ -147,7 +147,7 @@ final class UsageAggregatorImpl: UsageAggregator {
         let startTime = CFAbsoluteTimeGetCurrent()
         let now = Date()
         var result: [Date: AggregatedUsage] = [:]
-        
+
         // 시간대별 누적기 초기화
         struct HourlyAccumulator {
             var inputTokens: Int64 = 0
@@ -157,33 +157,37 @@ final class UsageAggregatorImpl: UsageAggregator {
             var entryCount: Int = 0
         }
         var accumulators: [Date: HourlyAccumulator] = [:]
-        
+
         // 시간대 키 미리 계산 (bucketHours 단위)
         var hourKeys: [Date] = []
-        
+
         // 기준 시간을 bucketHours 단위로 절삭
         let currentComponents = calendar.dateComponents([.year, .month, .day, .hour], from: now)
         let currentHour = currentComponents.hour ?? 0
         let truncatedHour = (currentHour / bucketHours) * bucketHours
-        
+
         var baseComponents = currentComponents
         baseComponents.hour = truncatedHour
         baseComponents.minute = 0
         baseComponents.second = 0
-        
+
         guard let baseDate = calendar.date(from: baseComponents) else { return [:] }
-        
+
+        logger.debug("[버킷] 현재 시간: \(now), 기준 시간: \(baseDate)")
+
         for offset in 0..<(hours / bucketHours) {
             if let bucketStart = calendar.date(byAdding: .hour, value: -offset * bucketHours, to: baseDate) {
                 hourKeys.append(bucketStart)
                 accumulators[bucketStart] = HourlyAccumulator()
             }
         }
-        
+
         // 윈도우 시작 시간
         guard let windowStart = hourKeys.min() else {
             return result
         }
+
+        logger.debug("[버킷] 윈도우 시작: \(windowStart), 종료: \(now), 버킷 개수: \(hourKeys.count)")
         
         // 단일 순회로 모든 엔트리 집계
         for entry in entries {

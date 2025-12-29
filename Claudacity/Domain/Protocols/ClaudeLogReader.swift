@@ -1,14 +1,32 @@
 // MARK: - Imports
 import Foundation
 
+// MARK: - Session Entries
+
+/// Represents entries from a single Claude Code session
+struct SessionEntries: Sendable {
+    let sessionId: String
+    let sessionFile: URL
+    let entries: [ClaudeLogEntry]
+    let lastModified: Date
+}
+
 // MARK: - Claude Log Reader Protocol
 /// Claude Code JSONL 로그 파일을 읽고 파싱하는 프로토콜
 protocol ClaudeLogReader {
     /// 모든 프로젝트 로그 디렉토리 조회
     func getLogDirectories() -> [URL]
 
-    /// 특정 프로젝트의 로그 항목 읽기
+    /// 특정 프로젝트의 로그 항목 읽기 (가장 최근 세션 하나)
     func readEntries(from projectDir: URL) async throws -> [ClaudeLogEntry]
+
+    /// 특정 세션 파일에서 로그 항목 읽기
+    /// - Parameter sessionFile: 세션 JSONL 파일 경로
+    /// - Returns: 해당 세션의 모든 로그 항목
+    func readSessionFile(_ sessionFile: URL) async throws -> [ClaudeLogEntry]
+
+    /// 특정 프로젝트의 모든 활성 세션 읽기 (여러 세션)
+    func readEntriesBySession(from projectDir: URL, activeMinutes: Int) async throws -> [SessionEntries]
 
     /// 모든 프로젝트의 로그 항목 읽기
     func readAllEntries() async throws -> [ClaudeLogEntry]

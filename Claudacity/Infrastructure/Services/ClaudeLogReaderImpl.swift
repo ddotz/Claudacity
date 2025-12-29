@@ -116,20 +116,11 @@ final class ClaudeLogReaderImpl: ClaudeLogReader, @unchecked Sendable {
         }
     }
 
-    func readEntries(from projectDir: URL) async throws -> [ClaudeLogEntry] {
-        // 프로젝트 디렉토리 내의 모든 .jsonl 파일 찾기 (UUID.jsonl 형식)
-        guard fileManager.fileExists(atPath: projectDir.path) else {
-            logger.debug("Project directory not found: \(projectDir.lastPathComponent)")
-            return []
-        }
-
-        var allEntries: [ClaudeLogEntry] = []
-
+    func readEntriesBySession(from projectDir: URL, activeMinutes: Int = 30) async throws -> [SessionEntries] {
         do {
-            // 심볼릭 링크를 건너뛰도록 옵션 추가 (권한 요청 방지)
             let contents = try fileManager.contentsOfDirectory(
                 at: projectDir,
-                includingPropertiesForKeys: [.isSymbolicLinkKey],
+                includingPropertiesForKeys: [.isSymbolicLinkKey, .contentModificationDateKey],
                 options: [.skipsHiddenFiles, .skipsPackageDescendants]
             )
 
@@ -143,17 +134,113 @@ final class ClaudeLogReaderImpl: ClaudeLogReader, @unchecked Sendable {
                 return url.pathExtension == "jsonl"
             }
 
-            for logFile in jsonlFiles {
-                let entries = try await readSingleFile(logFile)
-                allEntries.append(contentsOf: entries)
+            // 최근 N분 이내 수정된 파일만 선택 (활성 세션)
+            let cutoffDate = Date().addingTimeInterval(-Double(activeMinutes) * 60)
+            let activeFiles = jsonlFiles.filter { url in
+                if let modDate = try? url.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate {
+                    return modDate > cutoffDate
+                }
+                return false
             }
+
+            logger.debug("Found \(activeFiles.count) active sessions in \(projectDir.lastPathComponent)")
+
+            // 각 파일에서 세션 정보 추출
+            var sessionEntries: [SessionEntries] = []
+
+            for fileURL in activeFiles {
+                do {
+                    let entries = try await readSingleFile(fileURL)
+
+                    // session ID 추출 (파일명에서 추출 가능)
+                    let fileName = fileURL.deletingPathExtension().lastPathComponent
+                    let sessionId = fileName.hasPrefix("agent-") ? fileName : fileName
+
+                    let modDate = (try? fileURL.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate) ?? Date()
+
+                    let session = SessionEntries(
+                        sessionId: sessionId,
+                        sessionFile: fileURL,
+                        entries: entries,
+                        lastModified: modDate
+                    )
+
+                    sessionEntries.append(session)
+                } catch {
+                    logger.warning("Failed to read session file \(fileURL.lastPathComponent): \(error.localizedDescription)")
+                    continue
+                }
+            }
+
+            // 최근 수정 시간 순으로 정렬
+            sessionEntries.sort { $0.lastModified > $1.lastModified }
+
+            return sessionEntries
         } catch {
-            logger.error("Failed to read project directory: \(error.localizedDescription)")
+            logger.error("Failed to read sessions from \(projectDir.lastPathComponent): \(error.localizedDescription)")
+            return []
+        }
+    }
+
+    func readEntries(from projectDir: URL) async throws -> [ClaudeLogEntry] {
+        // 프로젝트 디렉토리 내의 가장 최근 .jsonl 파일만 읽기 (현재 활성 세션)
+        guard fileManager.fileExists(atPath: projectDir.path) else {
+            logger.debug("Project directory not found: \(projectDir.lastPathComponent)")
+            return []
         }
 
-        return allEntries
+        do {
+            // 심볼릭 링크를 건너뛰도록 옵션 추가 (권한 요청 방지)
+            let contents = try fileManager.contentsOfDirectory(
+                at: projectDir,
+                includingPropertiesForKeys: [.isSymbolicLinkKey, .contentModificationDateKey],
+                options: [.skipsHiddenFiles, .skipsPackageDescendants]
+            )
+
+            // 심볼릭 링크가 아닌 .jsonl 파일만 필터링
+            let jsonlFiles = contents.filter { url in
+                // 심볼릭 링크 건너뛰기
+                if let isSymlink = try? url.resourceValues(forKeys: [.isSymbolicLinkKey]).isSymbolicLink,
+                   isSymlink == true {
+                    return false
+                }
+                return url.pathExtension == "jsonl"
+            }
+
+            // 가장 최근에 수정된 파일 찾기 (현재 활성 세션)
+            guard let mostRecentFile = jsonlFiles.max(by: { file1, file2 in
+                let date1 = try? file1.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate
+                let date2 = try? file2.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate
+                return (date1 ?? .distantPast) < (date2 ?? .distantPast)
+            }) else {
+                logger.debug("No .jsonl files found in \(projectDir.lastPathComponent)")
+                return []
+            }
+
+            logger.debug("Reading most recent file: \(mostRecentFile.lastPathComponent)")
+            let entries = try await readSingleFile(mostRecentFile)
+            return entries
+        } catch {
+            logger.error("Failed to read project directory: \(error.localizedDescription)")
+            return []
+        }
     }
-    
+
+    func readSessionFile(_ sessionFile: URL) async throws -> [ClaudeLogEntry] {
+        guard sessionFile.pathExtension == "jsonl" else {
+            logger.warning("Not a JSONL file: \(sessionFile.lastPathComponent)")
+            return []
+        }
+
+        guard fileManager.fileExists(atPath: sessionFile.path) else {
+            logger.debug("Session file not found: \(sessionFile.lastPathComponent)")
+            return []
+        }
+
+        logger.debug("Reading session file: \(sessionFile.lastPathComponent)")
+        return try await readSingleFile(sessionFile)
+    }
+
     private func readSingleFile(_ logFile: URL) async throws -> [ClaudeLogEntry] {
         return try await Task.detached(priority: .utility) { [decoder, logger] in
             do {
@@ -233,19 +320,28 @@ final class ClaudeLogReaderImpl: ClaudeLogReader, @unchecked Sendable {
         }
 
         let entriesWithUsage = allEntries.filter { $0.usage != nil }
-        
+
         // 타임스탬프 기준 정렬
         let sortedEntries = allEntries.sorted { ($0.timestamp ?? .distantPast) < ($1.timestamp ?? .distantPast) }
-        
+
+        // 디버그: 최근 5개 엔트리 로그
+        let recentEntries = entriesWithUsage.suffix(5)
+        for entry in recentEntries {
+            if let timestamp = entry.timestamp, let usage = entry.usage {
+                let tokens = usage.inputTokens + usage.outputTokens + (usage.cacheCreationInputTokens ?? 0)
+                logger.debug("[최근 엔트리] \(timestamp): \(tokens) 토큰")
+            }
+        }
+
         // 캐시 업데이트
         cacheLock.lock()
         cachedEntries = sortedEntries
         lastLoadTime = Date()
         cacheLock.unlock()
-        
+
         let elapsed = CFAbsoluteTimeGetCurrent() - startTime
         logger.info("[성능] 전체 로드: \(allEntries.count) entries, with usage: \(entriesWithUsage.count), 소요시간: \(String(format: "%.3f", elapsed))s")
-        
+
         return sortedEntries
     }
     

@@ -17,6 +17,7 @@ struct UsageTabView: View {
         VStack(spacing: Dimensions.Spacing.medium) {
             usageContent
         }
+        .frame(maxHeight: .infinity, alignment: .top)
         .padding(.horizontal)
         .padding(.vertical, Dimensions.Spacing.medium)
         // Note: .task 제거 - 권한 요청 방지를 위해 차트 자동 로드 비활성화
@@ -28,6 +29,14 @@ struct UsageTabView: View {
                     await viewModel.loadChartData(for: newPeriod)
                 }
             }
+        }
+        .onAppear {
+            // Start monitoring active Claude Code processes
+            viewModel.startProcessMonitoring()
+        }
+        .onDisappear {
+            // Stop monitoring when view disappears
+            viewModel.stopProcessMonitoring()
         }
     }
 
@@ -41,10 +50,19 @@ struct UsageTabView: View {
             sectionHeader(String(localized: "tab.usage"))
             combinedUsageCard
             tokenBreakdownView
-            
-            // 통계 섹션
-            sectionHeader(String(localized: "tab.stats"))
-            chartCard
+
+            // 활성 프로세스 섹션 (통계 대신 표시)
+            sectionHeader("컨텍스트 사용량")
+            ActiveProcessesView(processes: viewModel.activeProcesses)
+
+            // 디버그 정보
+            Text("Process count: \(viewModel.activeProcesses.count)")
+                .font(.caption2)
+                .foregroundColor(.secondary)
+
+            // 통계 섹션 (임시로 숨김)
+            // sectionHeader(String(localized: "tab.stats"))
+            // chartCard
         }
     }
 

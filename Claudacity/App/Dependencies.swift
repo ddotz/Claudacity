@@ -44,16 +44,28 @@ final class Dependencies {
     }()
 
     private(set) lazy var cliRunner: CLIRunnerProtocol = {
-        #if DEBUG
-        MockCLIRunner()
-        #else
+        // 항상 실제 CLI Runner 사용 (프로세스 모니터링에 필요)
         CLIRunner()
-        #endif
     }()
 
     private(set) lazy var cliUsageService: CLIUsageServiceProtocol = {
         // 항상 실제 CLI 서비스 사용 (실시간 데이터 필요)
         CLIUsageService()
+    }()
+
+    private(set) lazy var processDiscovery: ProcessDiscovery = {
+        ProcessDiscoveryImpl()
+    }()
+
+    private(set) lazy var logReader: ClaudeLogReader = {
+        ClaudeLogReaderImpl()
+    }()
+
+    private(set) lazy var activeProcessMonitor: ActiveProcessMonitor = {
+        ActiveProcessMonitorImpl(
+            processDiscovery: processDiscovery,
+            logReader: logReader
+        )
     }()
 
     private(set) lazy var usageViewModel: UsageViewModel = {
@@ -64,7 +76,8 @@ final class Dependencies {
             dataManager: dataManager,
             sessionDetector: sessionDetector,
             cliRunner: cliRunner,
-            cliUsageService: cliUsageService
+            cliUsageService: cliUsageService,
+            activeProcessMonitor: activeProcessMonitor
         )
     }()
 

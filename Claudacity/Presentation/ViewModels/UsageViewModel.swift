@@ -28,6 +28,10 @@ final class UsageViewModel: ObservableObject {
     @Published private(set) var cliUsageResult: CLIUsageResult?
     @Published private(set) var isCLIUsageAvailable = false
 
+    // Active Process Monitoring
+    @Published private(set) var activeProcesses: [ActiveClaudeProcess] = []
+    @Published private(set) var processSnapshot: ProcessSnapshot?
+
     // MARK: Computed Properties (CLI /usage 전용)
 
     /// CLI 결과가 없으면 사용 중이지 않은 것으로 판단
@@ -299,6 +303,7 @@ final class UsageViewModel: ObservableObject {
     private let cliUsageService: CLIUsageServiceProtocol
     private let logReader: ClaudeLogReader
     private let usageAggregator: UsageAggregator
+    private let activeProcessMonitor: ActiveProcessMonitor
     private var refreshTask: Task<Void, Never>?
     private var cancellables = Set<AnyCancellable>()
     private var lastNotifiedThreshold: Int?
@@ -313,7 +318,8 @@ final class UsageViewModel: ObservableObject {
         cliRunner: CLIRunnerProtocol,
         cliUsageService: CLIUsageServiceProtocol = CLIUsageService(),
         logReader: ClaudeLogReader = ClaudeLogReaderImpl(),
-        usageAggregator: UsageAggregator = UsageAggregatorImpl()
+        usageAggregator: UsageAggregator = UsageAggregatorImpl(),
+        activeProcessMonitor: ActiveProcessMonitor
     ) {
         self.repository = repository
         self.notificationService = notificationService
@@ -324,6 +330,7 @@ final class UsageViewModel: ObservableObject {
         self.cliUsageService = cliUsageService
         self.logReader = logReader
         self.usageAggregator = usageAggregator
+        self.activeProcessMonitor = activeProcessMonitor
 
         // Load cached data
         if let cached = repository.getCachedUsage() {
@@ -335,6 +342,15 @@ final class UsageViewModel: ObservableObject {
             .dropFirst()
             .sink { [weak self] _ in
                 self?.objectWillChange.send()
+            }
+            .store(in: &cancellables)
+
+        // Subscribe to process updates
+        activeProcessMonitor.processUpdates
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] snapshot in
+                self?.processSnapshot = snapshot
+                self?.activeProcesses = snapshot.processes
             }
             .store(in: &cancellables)
 
@@ -354,6 +370,7 @@ final class UsageViewModel: ObservableObject {
 
     deinit {
         refreshTask?.cancel()
+        activeProcessMonitor.stopMonitoring()
     }
 
     // MARK: Public Methods
@@ -905,5 +922,24 @@ final class UsageViewModel: ObservableObject {
     /// 구독 플랜 기준 토큰 한도
     var tokenLimit: Int64 {
         settingsStore.settings.subscriptionPlan.estimatedTokenLimit
+    }
+
+    // MARK: - Active Process Monitoring
+
+    /// Starts monitoring active Claude Code processes
+    func startProcessMonitoring(interval: TimeInterval = 5.0) {
+        logInfo("Starting active process monitoring with \(interval)s interval", category: .cli)
+        activeProcessMonitor.startMonitoring(interval: interval)
+    }
+
+    /// Stops monitoring active Claude Code processes
+    func stopProcessMonitoring() {
+        logInfo("Stopping active process monitoring", category: .cli)
+        activeProcessMonitor.stopMonitoring()
+    }
+
+    /// Gets the current snapshot of active processes
+    func getCurrentProcessSnapshot() async -> ProcessSnapshot {
+        await activeProcessMonitor.getCurrentSnapshot()
     }
 }
