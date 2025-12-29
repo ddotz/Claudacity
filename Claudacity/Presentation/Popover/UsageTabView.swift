@@ -55,11 +55,6 @@ struct UsageTabView: View {
             sectionHeader("컨텍스트 사용량")
             ActiveProcessesView(processes: viewModel.activeProcesses)
 
-            // 디버그 정보
-            Text("Process count: \(viewModel.activeProcesses.count)")
-                .font(.caption2)
-                .foregroundColor(.secondary)
-
             // 통계 섹션 (임시로 숨김)
             // sectionHeader(String(localized: "tab.stats"))
             // chartCard
