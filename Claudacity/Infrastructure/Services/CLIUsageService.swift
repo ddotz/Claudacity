@@ -93,7 +93,10 @@ final class CLIUsageService: CLIUsageServiceProtocol, @unchecked Sendable {
         let output = try await runClaudeUsageWithScript(claudePath: claudePath)
 
         // 3. 출력 파싱
-        let result = parseUsageOutput(output)
+        guard let result = parseUsageOutput(output) else {
+            logWarning("Failed to parse CLI usage output", category: .cli)
+            throw AppError.cliExecutionFailed("Failed to parse usage data")
+        }
 
         logInfo("CLI usage fetched: session=\(result.sessionUsedPercent)%, weekly=\(result.weeklyUsedPercent)%", category: .cli)
 
@@ -320,15 +323,16 @@ final class CLIUsageService: CLIUsageServiceProtocol, @unchecked Sendable {
     /// SESSION_RESET:4:59pm (KST)
     /// WEEKLY_USED:52
     /// WEEKLY_RESET:Dec 16, 10:59am (KST)
-    private func parseUsageOutput(_ output: String) -> CLIUsageResult {
+    /// - Returns: 파싱된 결과, 파싱 실패 시 nil
+    private func parseUsageOutput(_ output: String) -> CLIUsageResult? {
         logDebug("Starting to parse expect script output", category: .cli)
         print("=== PARSING START ===")
         print("Output to parse (\(output.count) bytes):")
         print(output)
 
-        var sessionUsed: Int = 0
+        var sessionUsed: Int?
         var sessionReset: String?
-        var weeklyUsed: Int = 0
+        var weeklyUsed: Int?
         var weeklyReset: String?
 
         // 라인별로 파싱
@@ -341,8 +345,8 @@ final class CLIUsageService: CLIUsageServiceProtocol, @unchecked Sendable {
             if trimmed.hasPrefix("SESSION_USED:") {
                 if let value = Int(trimmed.replacingOccurrences(of: "SESSION_USED:", with: "")) {
                     sessionUsed = value
-                    logDebug("Parsed SESSION_USED: \(sessionUsed)%", category: .cli)
-                    print("✓ Parsed SESSION_USED: \(sessionUsed)")
+                    logDebug("Parsed SESSION_USED: \(value)%", category: .cli)
+                    print("✓ Parsed SESSION_USED: \(value)")
                 }
             } else if trimmed.hasPrefix("SESSION_RESET:") {
                 sessionReset = trimmed.replacingOccurrences(of: "SESSION_RESET:", with: "")
@@ -351,8 +355,8 @@ final class CLIUsageService: CLIUsageServiceProtocol, @unchecked Sendable {
             } else if trimmed.hasPrefix("WEEKLY_USED:") {
                 if let value = Int(trimmed.replacingOccurrences(of: "WEEKLY_USED:", with: "")) {
                     weeklyUsed = value
-                    logDebug("Parsed WEEKLY_USED: \(weeklyUsed)%", category: .cli)
-                    print("✓ Parsed WEEKLY_USED: \(weeklyUsed)")
+                    logDebug("Parsed WEEKLY_USED: \(value)%", category: .cli)
+                    print("✓ Parsed WEEKLY_USED: \(value)")
                 }
             } else if trimmed.hasPrefix("WEEKLY_RESET:") {
                 weeklyReset = trimmed.replacingOccurrences(of: "WEEKLY_RESET:", with: "")
@@ -364,17 +368,18 @@ final class CLIUsageService: CLIUsageServiceProtocol, @unchecked Sendable {
             }
         }
 
-        // 파싱 실패 경고
-        if sessionUsed == 0 && weeklyUsed == 0 {
+        // 파싱 실패: 최소한 세션 또는 주간 사용량 중 하나는 있어야 함
+        guard sessionUsed != nil || weeklyUsed != nil else {
             logWarning("Failed to parse usage data from expect script output", category: .cli)
             logDebug("Full output:\n\(output)", category: .cli)
             print("❌ PARSING FAILED: No usage data found")
+            return nil
         }
 
         let result = CLIUsageResult(
-            sessionUsedPercent: sessionUsed,
+            sessionUsedPercent: sessionUsed ?? 0,
             sessionResetTime: sessionReset,
-            weeklyUsedPercent: weeklyUsed,
+            weeklyUsedPercent: weeklyUsed ?? 0,
             weeklyResetTime: weeklyReset,
             fetchedAt: Date()
         )
