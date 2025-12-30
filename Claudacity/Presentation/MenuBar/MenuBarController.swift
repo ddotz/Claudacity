@@ -131,9 +131,19 @@ final class MenuBarController: NSObject, ObservableObject {
             .foregroundColor: NSColor.controlTextColor
         ]
 
-        // Percentage text or "대기중" status based on display mode
+        // Percentage text
         if viewModel.isNotInUse {
-            attributedTitle.append(NSAttributedString(string: "대기중", attributes: textAttributes))
+            // CLI 사용량 파싱 전: "--%" 표시 (하이픈 2개로 숫자 2자리 크기)
+            switch settings.displayMode {
+            case .session, .weekly:
+                attributedTitle.append(NSAttributedString(string: "--%", attributes: textAttributes))
+            case .all:
+                // 모두: 세션/주간 둘 다 위아래로 "--%" 표시
+                attributedTitle.append(createDualTextAttributedString(
+                    top: "--%",
+                    bottom: "--%"
+                ))
+            }
         } else if Dependencies.shared.settingsStore.showPercentage {
             switch settings.displayMode {
             case .session:
@@ -149,8 +159,11 @@ final class MenuBarController: NSObject, ObservableObject {
             }
         }
 
-        // Mini gauge bar (only when in use)
-        if settings.enableAnimations && !viewModel.isNotInUse {
+        // Mini gauge bar or "대기중" status
+        if viewModel.isNotInUse {
+            // 게이지 바 대신 "대기중" 표시
+            attributedTitle.append(NSAttributedString(string: " 대기중", attributes: textAttributes))
+        } else if settings.enableAnimations {
             attributedTitle.append(NSAttributedString(string: " "))
             switch settings.displayMode {
             case .session:
